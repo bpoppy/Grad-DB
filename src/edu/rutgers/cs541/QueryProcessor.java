@@ -1,5 +1,6 @@
 package edu.rutgers.cs541;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.TreeSet;
 
@@ -31,14 +32,20 @@ public class QueryProcessor {
 	
 	private void extractNumberValues(String query){
 		String[] tokens = query.split("\\s+");
+		System.out.println(Arrays.toString(tokens));
 		for (String tok : tokens){
 			try{
-				doubleSet.add(Double.valueOf(tok));								
+				doubleSet.add(Double.parseDouble(tok));								
 			} catch(Exception ex){}
 
 			try{
-				intSet.add(Integer.valueOf(tok));								
+				intSet.add(Integer.parseInt(tok));								
 			} catch(Exception ex){}
+			
+			if(tok.indexOf("0x") == 0)
+				try{
+					intSet.add(Integer.parseInt(tok.substring(2), 16));								
+				} catch(Exception ex){}
 		}
 	}
 
@@ -161,11 +168,12 @@ public class QueryProcessor {
 						|| query.charAt(endIdx + 1) == quoteChar) {
 
 					// make sure the quote isn't escaped
-					while (precedingSlashes(query, endIdx) % 2 == 1)
-						endIdx++;
+					while (precedingSlashes(query, endIdx) % 2 == 1){
+						endIdx = query.indexOf(quoteChar, endIdx + 1);
+					}
 					// make sure it isn't a literal quote ex: '' , ""
 					while (query.charAt(endIdx + 1) == quoteChar)
-						endIdx += 2;
+						endIdx = query.indexOf(quoteChar, endIdx + 2);
 				}
 
 				// If there is a string concatenated to the end of this one ex:
@@ -181,8 +189,17 @@ public class QueryProcessor {
 			}
 
 			// add the string to the set and remove it from the query
-			stringSet.add(query.substring(startIdx + 1, endIdx));
+			stringSet.add(query.substring(startIdx, endIdx + 1));
 			query = query.substring(0, startIdx) + query.substring(endIdx + 1);
 		}
+	}
+	
+	public static void main(String[] args){
+		QueryProcessor qp = new QueryProcessor();
+		qp.processQuery("SELECT id FROM T2 WHERE id > 0x5FA5 OR id < 17 AND NOT tag = \"tag:\\\"1\\\"\" AND name IN (SELECT * FROM T1 WHERE name LIKE \"Brian\" ' Poppy' OR AVG(score) + 20 > 5.5)");
+		System.out.println("Doubles: " + Arrays.toString(qp.doubleSet.toArray()));
+		System.out.println("Ints: " + Arrays.toString(qp.intSet.toArray()));
+		System.out.println("Strings: " + Arrays.toString(qp.stringSet.toArray()));
+		
 	}
 }
