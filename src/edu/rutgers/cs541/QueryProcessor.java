@@ -16,7 +16,7 @@ import java.util.TreeSet;
 public class QueryProcessor {
 	public TreeSet<Double> doubleSet = new TreeSet<Double>();
 	public TreeSet<Integer> intSet = new TreeSet<Integer>();
-	public HashSet<String> stringSet = new HashSet<String>();
+	public TreeSet<String> stringSet = new TreeSet<String>();
 
 	/**
 	 * Process the query and extract all values we care about.
@@ -27,35 +27,46 @@ public class QueryProcessor {
 	public void processQuery(String query) {
 		query = extractStrings(query);
 		query = replaceOperators(query);
-		extractNumberValues(query);		
+		extractNumberValues(query);
 	}
-	
-	private void extractNumberValues(String query){
+
+	private void extractNumberValues(String query) {
 		String[] tokens = query.split("\\s+");
 		System.out.println(Arrays.toString(tokens));
-		for (String tok : tokens){
-			try{
-				doubleSet.add(Double.parseDouble(tok));								
-			} catch(Exception ex){}
+		for (String tok : tokens) {
+			try {
+				double parsedValue;
+				parsedValue = Double.parseDouble(tok);
+				doubleSet.add(parsedValue);
+				if(parsedValue == (int)parsedValue){
+					intSet.add((int)parsedValue);					
+				}
+			} catch (Exception ex) {
+			}
 
-			try{
-				intSet.add(Integer.parseInt(tok));								
-			} catch(Exception ex){}
-			
-			if(tok.indexOf("0x") == 0)
-				try{
-					intSet.add(Integer.parseInt(tok.substring(2), 16));								
-				} catch(Exception ex){}
+			try {
+				intSet.add(Integer.parseInt(tok));
+			} catch (Exception ex) {
+			}
+
+			if (tok.indexOf("0x") == 0)
+				try {
+					intSet.add(Integer.parseInt(tok.substring(2), 16));
+					doubleSet.add(Double.valueOf(Integer.parseInt(
+							tok.substring(2), 16)));
+				} catch (Exception ex) {
+				}
 		}
 	}
 
 	private String replaceOperators(String query) {
 		Character[] charSet = { '(', ')', '+', '/', '=', '[', ']', '*', '-' };
-		for (Character ch : charSet)
-			while (query.indexOf(ch) >= 0)
+		for (Character ch : charSet) {
+			while (query.indexOf(ch) >= 0) {
 				query = query.substring(0, query.indexOf(ch)) + ' '
 						+ query.substring(query.indexOf(ch) + 1);
-
+			}
+		}
 		return query;
 	}
 
@@ -70,9 +81,10 @@ public class QueryProcessor {
 			query = query.substring(0, query.indexOf('(')) + ' '
 					+ query.substring(query.indexOf('(') + 1);
 
-		while (query.indexOf(')') >= 0)
+		while (query.indexOf(')') >= 0) {
 			query = query.substring(0, query.indexOf(')')) + ' '
 					+ query.substring(query.indexOf(')') + 1);
+		}
 
 		return query;
 	}
@@ -102,10 +114,10 @@ public class QueryProcessor {
 	 * @return whether there is a second string literal concatenated to this one
 	 */
 	private boolean concattedString(String query, int idx) {
-		int i = idx + 1;
+		int i;
 
-		while (query.charAt(i) == ' ')
-			i++;
+		for (i = idx + 1; query.charAt(i) == ' '; i++)
+			;
 
 		if (query.charAt(i) == '\'' || query.charAt(i) == '\"')
 			return true;
@@ -121,10 +133,10 @@ public class QueryProcessor {
 	 * @return the index of the next string's starting quote
 	 */
 	private int concattedStringStartIdx(String query, int idx) {
-		int i = idx + 1;
+		int i;
 
-		while (query.charAt(i) == ' ')
-			i++;
+		for (i = idx + 1; query.charAt(i) == ' '; i++)
+			;
 
 		return i;
 	}
@@ -168,7 +180,7 @@ public class QueryProcessor {
 						|| query.charAt(endIdx + 1) == quoteChar) {
 
 					// make sure the quote isn't escaped
-					while (precedingSlashes(query, endIdx) % 2 == 1){
+					while (precedingSlashes(query, endIdx) % 2 == 1) {
 						endIdx = query.indexOf(quoteChar, endIdx + 1);
 					}
 					// make sure it isn't a literal quote ex: '' , ""
@@ -193,13 +205,15 @@ public class QueryProcessor {
 			query = query.substring(0, startIdx) + query.substring(endIdx + 1);
 		}
 	}
-	
-	public static void main(String[] args){
+
+	public static void main(String[] args) {
 		QueryProcessor qp = new QueryProcessor();
-		qp.processQuery("SELECT id FROM T2 WHERE id > 0x5FA5 OR id < 17 AND NOT tag = \"tag:\\\"1\\\"\" AND name IN (SELECT * FROM T1 WHERE name LIKE \"Brian\" ' Poppy' OR AVG(score) + 20 > 5.5)");
-		System.out.println("Doubles: " + Arrays.toString(qp.doubleSet.toArray()));
+		qp.processQuery("SELECT id FROM T2 WHERE id > 0x5FA5 OR id < 17 AND NOT tag = \"tag:\\\"1\\\"\" AND name IN (SELECT * FROM T1 WHERE name LIKE \"Brian\" ' Poppy' OR AVG(score) + 20.0 > 5.5)");
+		System.out.println("Doubles: "
+				+ Arrays.toString(qp.doubleSet.toArray()));
 		System.out.println("Ints: " + Arrays.toString(qp.intSet.toArray()));
-		System.out.println("Strings: " + Arrays.toString(qp.stringSet.toArray()));
-		
+		System.out.println("Strings: "
+				+ Arrays.toString(qp.stringSet.toArray()));
+
 	}
 }
