@@ -75,7 +75,7 @@ public class ColumnConstraints {
 		}
 
 		case Types.INTEGER: {
-
+			
 			if ((randomAllowed && EntryPoint.random.nextInt(10) == 0)
 					|| constraints.cardinality() == 0) {
 				return String.valueOf(EntryPoint.random.nextInt());
@@ -134,6 +134,7 @@ public class ColumnConstraints {
 	
 	private static String randomString() {
 		StringBuilder sb = new StringBuilder();
+		//TODO change the number of characters to be between 0 and the size of the varchar instead of a fixed value.
 		for (int i = EntryPoint.random.nextInt(10); i > 0; i--) {
 			int type = EntryPoint.random.nextInt(3);
 			switch (type) {
