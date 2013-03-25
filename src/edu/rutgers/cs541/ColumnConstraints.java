@@ -134,7 +134,7 @@ public class ColumnConstraints {
 	
 	private static String randomString() {
 		StringBuilder sb = new StringBuilder();
-		for (int i = EntryPoint.random.nextInt(100); i > 0; i--) {
+		for (int i = EntryPoint.random.nextInt(10); i > 0; i--) {
 			int type = EntryPoint.random.nextInt(3);
 			switch (type) {
 			case 0: {
