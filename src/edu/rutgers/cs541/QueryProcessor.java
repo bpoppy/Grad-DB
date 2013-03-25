@@ -1,7 +1,8 @@
 package edu.rutgers.cs541;
 
+import java.sql.Types;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Set;
 import java.util.TreeSet;
 
 /**
@@ -14,9 +15,10 @@ import java.util.TreeSet;
  */
 
 public class QueryProcessor {
-	public TreeSet<Double> doubleSet = new TreeSet<Double>();
-	public TreeSet<Integer> intSet = new TreeSet<Integer>();
-	public TreeSet<String> stringSet = new TreeSet<String>();
+	
+	private static TreeSet<Double> doubleSet = new TreeSet<Double>();
+	private static TreeSet<Integer> intSet = new TreeSet<Integer>();
+	private static TreeSet<String> stringSet = new TreeSet<String>();
 
 	/**
 	 * Process the query and extract all values we care about.
@@ -24,13 +26,39 @@ public class QueryProcessor {
 	 * @param query
 	 *            the query
 	 */
-	public void processQuery(String query) {
+	public static void processQuery(String query) {
 		query = extractStrings(query);
 		query = replaceOperators(query);
 		extractNumberValues(query);
 	}
+	
+	public static Set getValues(int type){
+		switch (type){
+		case Types.DOUBLE:{
+			return doubleSet;
+		}
 
-	private void extractNumberValues(String query) {
+		case Types.VARCHAR:{
+			return stringSet;
+		}
+
+		case Types.INTEGER:{
+			return intSet;
+		}
+		
+		default:{
+			
+			throw new RuntimeException("Invalid Type" + type);
+		}
+		}
+	}
+
+	/**
+	 * Find all the int and double values and put them in the sets.
+	 * 
+	 * @param query
+	 */
+	private static void extractNumberValues(String query) {
 		String[] tokens = query.split("\\s+");
 		System.out.println(Arrays.toString(tokens));
 		for (String tok : tokens) {
@@ -38,8 +66,8 @@ public class QueryProcessor {
 				double parsedValue;
 				parsedValue = Double.parseDouble(tok);
 				doubleSet.add(parsedValue);
-				if(parsedValue == (int)parsedValue){
-					intSet.add((int)parsedValue);					
+				if (parsedValue == (int) parsedValue) {
+					intSet.add((int) parsedValue);
 				}
 			} catch (Exception ex) {
 			}
@@ -59,7 +87,14 @@ public class QueryProcessor {
 		}
 	}
 
-	private String replaceOperators(String query) {
+	/**
+	 * 
+	 * @param query
+	 * @return modified query with all the characters in the array replaced with
+	 *         spaces. Helps with pulling out key words but we might not want to
+	 *         remove parens and the like if we want to evaluate expressions.
+	 */
+	private static String replaceOperators(String query) {
 		Character[] charSet = { '(', ')', '+', '/', '=', '[', ']', '*', '-' };
 		for (Character ch : charSet) {
 			while (query.indexOf(ch) >= 0) {
@@ -76,7 +111,7 @@ public class QueryProcessor {
 	 *            the query
 	 * @return modified query qith parens replaced with spaces
 	 */
-	private String removeParens(String query) {
+	private static String removeParens(String query) {
 		while (query.indexOf('(') >= 0)
 			query = query.substring(0, query.indexOf('(')) + ' '
 					+ query.substring(query.indexOf('(') + 1);
@@ -97,7 +132,7 @@ public class QueryProcessor {
 	 *            the index of the prospective end quote
 	 * @return how many backslashes precede the quote
 	 */
-	private int precedingSlashes(String query, int idx) {
+	private static int precedingSlashes(String query, int idx) {
 		for (int i = 1; i <= idx; i++) {
 			if (query.charAt(idx - i) != '\\')
 				return i - 1;
@@ -113,7 +148,7 @@ public class QueryProcessor {
 	 *            the end index of the first string literal
 	 * @return whether there is a second string literal concatenated to this one
 	 */
-	private boolean concattedString(String query, int idx) {
+	private static boolean concattedString(String query, int idx) {
 		int i;
 
 		for (i = idx + 1; query.charAt(i) == ' '; i++)
@@ -132,7 +167,7 @@ public class QueryProcessor {
 	 *            the end index of the first string literal
 	 * @return the index of the next string's starting quote
 	 */
-	private int concattedStringStartIdx(String query, int idx) {
+	private static int concattedStringStartIdx(String query, int idx) {
 		int i;
 
 		for (i = idx + 1; query.charAt(i) == ' '; i++)
@@ -147,7 +182,7 @@ public class QueryProcessor {
 	 *            the query
 	 * @return a modified query with all string literals removed
 	 */
-	private String extractStrings(String query) {
+	private static String extractStrings(String query) {
 		int startIdx = 0, endIdx;
 
 		while (true) {
