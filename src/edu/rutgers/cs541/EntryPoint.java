@@ -60,6 +60,7 @@ public class EntryPoint {
 		QueryProcessor.processQuery(query2);
 		
 		
+		
 		int count = 0;
 		
 		while(true){

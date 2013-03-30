@@ -22,13 +22,15 @@ public class TableConstraints {
 
 	private HashMap<String, ColumnConstraints> columnConstraints = new HashMap<String, ColumnConstraints>();
 
+	private InstanceTester tester;
+
 	public ColumnConstraints getColumnConstraints(String name) {
 		return columnConstraints.get(name);
 	}
 
 	private void determineValuesAllowed(int dataType) {
 		boolean randomAllowed = EntryPoint.random.nextBoolean();
-		int valuesSize = QueryProcessor.getValues(dataType).size();
+		int valuesSize = tester.getValues(dataType).size();
 		BitSet bs = new BitSet();
 
 		if (valuesSize > 0) {
@@ -48,19 +50,20 @@ public class TableConstraints {
 		randomValuesInTable.put(dataType, randomAllowed);
 	}
 
-	public TableConstraints(String name) {
+	public TableConstraints(String name, InstanceTester tester) {
 		this.name = name;
+		this.tester = tester;
 		determineValuesAllowed(Types.DOUBLE);
 		determineValuesAllowed(Types.INTEGER);
 		determineValuesAllowed(Types.VARCHAR);
 	}
 
-	public void addColumn(String columnName, int columnType, boolean nullable) {
+	public void addColumn(String columnName, int columnType, boolean nullable, int maxSize) {
 		columnConstraints.put(
 				columnName,
 				new ColumnConstraints(columnName, columnType, valuesInTable
 						.get(columnType), randomValuesInTable.get(columnType),
-						nullable));
+						nullable, maxSize, tester));
 	}
 
 }

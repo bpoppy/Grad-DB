@@ -1,8 +1,10 @@
 package edu.rutgers.cs541;
 
 import java.sql.Types;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Set;
+import java.util.TreeSet;
 
 public class ColumnConstraints {
 
@@ -11,11 +13,16 @@ public class ColumnConstraints {
 	int columnType;
 	boolean randomAllowed;
 	boolean nullable;
+	private int maxSize;
+	private InstanceTester tester;
+	
 
 	public ColumnConstraints(String columnName, int columnType,
-			BitSet tableConstraints, Boolean randomAllowed, boolean nullable) {
+			BitSet tableConstraints, Boolean randomAllowed, boolean nullable, int maxSize, InstanceTester tester) {
 		this.name = columnName;
 		this.columnType = columnType;
+		this.maxSize = maxSize;
+		this.tester = tester;
 		
 		constraints = new BitSet(tableConstraints.length());
 		for (int i = 0; i < constraints.size(); i++) {
@@ -44,7 +51,7 @@ public class ColumnConstraints {
 			return "NULL";
 		}
 
-		Set values = QueryProcessor.getValues(columnType);
+		Set values = tester.getValues(columnType);
 
 		switch (columnType) {
 		case Types.DOUBLE: {
@@ -54,7 +61,7 @@ public class ColumnConstraints {
 				return String.valueOf(EntryPoint.random.nextDouble());
 			}
 
-			int count = EntryPoint.random.nextInt(constraints.cardinality());
+			int count = EntryPoint.random.nextInt(constraints.cardinality()) - 1;
 			int idx;
 			for (idx = constraints.nextSetBit(0); idx >= 0 && count > 0; idx = constraints
 					.nextSetBit(idx + 1), count--)
@@ -62,7 +69,7 @@ public class ColumnConstraints {
 
 			assert count == 0;
 
-			Double[] valuesArray = (Double[]) values.toArray();
+			Object[] valuesArray = (Object[]) values.toArray();
 
 			if (idx < valuesArray.length) {
 				return String.valueOf(valuesArray[idx]);
@@ -70,7 +77,7 @@ public class ColumnConstraints {
 
 			idx -= valuesArray.length;
 			return String
-					.valueOf((valuesArray[idx] + valuesArray[idx + 1]) / 2);
+					.valueOf(((Double)valuesArray[idx] + (Double)valuesArray[idx + 1]) / 2);
 
 		}
 
@@ -78,10 +85,11 @@ public class ColumnConstraints {
 			
 			if ((randomAllowed && EntryPoint.random.nextInt(10) == 0)
 					|| constraints.cardinality() == 0) {
+				System.out.println("random value selected");
 				return String.valueOf(EntryPoint.random.nextInt());
 			}
 
-			int count = EntryPoint.random.nextInt(constraints.cardinality());
+			int count = EntryPoint.random.nextInt(constraints.cardinality()) - 1;
 			int idx;
 			for (idx = constraints.nextSetBit(0); idx >= 0 && count > 0; idx = constraints
 					.nextSetBit(idx + 1), count--)
@@ -89,15 +97,23 @@ public class ColumnConstraints {
 
 			assert count == 0;
 
-			Integer[] valuesArray = (Integer[]) values.toArray();
+			Object[] valuesArray = (Object[]) values.toArray();
 
 			if (idx < valuesArray.length) {
 				return String.valueOf(valuesArray[idx]);
 			}
 
+			System.out.println(constraints.toString());
+			System.out.println("size "+ constraints + " " + constraints.size() + "  " + constraints.length());
+			
+			
+			System.out.println("cardinality " + constraints.cardinality());
+			System.out.println(Arrays.toString(valuesArray));
+			System.out.println(valuesArray[idx]);
+
 			idx -= valuesArray.length;
 			return String
-					.valueOf((valuesArray[idx] + valuesArray[idx + 1]) / 2);
+					.valueOf(((Integer)valuesArray[idx] + (Integer)valuesArray[idx + 1]) / 2);
 
 		}
 
@@ -105,21 +121,27 @@ public class ColumnConstraints {
 
 			if ((randomAllowed && EntryPoint.random.nextInt(10) == 0)
 					|| constraints.cardinality() == 0) {
-				return randomString();
+				return randomString(maxSize);
 			}
 
-			int count = EntryPoint.random.nextInt(constraints.cardinality());
+			int count = EntryPoint.random.nextInt(constraints.cardinality()) - 1;
 			int idx;
+			System.out.println(constraints.cardinality());
 			for (idx = constraints.nextSetBit(0); idx >= 0 && count > 0; idx = constraints
 					.nextSetBit(idx + 1), count--)
 				;
 
 			assert count == 0;
 
-			Integer[] valuesArray = (Integer[]) values.toArray();
+			System.out.println(idx + " " + values.getClass() + "  " + values.toString() );
+			Object[] valuesArray = (Object[]) values.toArray();
 
 			if (idx < valuesArray.length) {
-				return String.valueOf(valuesArray[idx]);
+				String retValue = String.valueOf(valuesArray[idx]).substring(0, Math.min(maxSize, String.valueOf(valuesArray[idx]).length()) - 1) + "\'";
+				
+				return retValue;
+			} else{
+				return randomString(maxSize);
 			}
 		}
 		
@@ -132,10 +154,10 @@ public class ColumnConstraints {
 	}
 	
 	
-	private static String randomString() {
+	
+	public static String randomString(int maxSize) {
 		StringBuilder sb = new StringBuilder();
-		//TODO change the number of characters to be between 0 and the size of the varchar instead of a fixed value.
-		for (int i = EntryPoint.random.nextInt(10); i > 0; i--) {
+		for (int i = EntryPoint.random.nextInt(maxSize) + 1; i > 0; i--) {
 			int type = EntryPoint.random.nextInt(3);
 			switch (type) {
 			case 0: {

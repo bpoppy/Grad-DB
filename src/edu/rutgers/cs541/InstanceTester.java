@@ -6,17 +6,73 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class InstanceTester {
 
+	private final static int MIN_NUM_CONSTRAINTS = 10;
+	
 	private Connection conn = null;
 	private Statement stmt;
 
+	
+	private static int minRows = Integer.MAX_VALUE;
+	private int numRows = 0;
+	
 	private HashMap<String, TableConstraints> tableConstraints = new HashMap<String, TableConstraints>();
 
+	private TreeSet<Double> doubleSet = new TreeSet<Double>();
+	private TreeSet<Integer> intSet = new TreeSet<Integer>();
+	private TreeSet<String> stringSet = new TreeSet<String>();
+	
+	
+
+	public InstanceTester(String schemaFile) {
+		getQueryProcessorValues();
+		padConstraintValues();
+		initializeTable(schemaFile);
+		determineConstraints();
+		populateTables();
+		testEquality();
+	}
+	
+	/**
+	 * 
+	 * @param type SQL value type
+	 * @return The set of values that are stored of the specified type
+	 */
+	public Set getValues(int type){
+		switch (type){
+		case Types.DOUBLE:{
+			return doubleSet;
+		}
+
+		case Types.VARCHAR:{
+			return stringSet;
+		}
+
+		case Types.INTEGER:{
+			return intSet;
+		}
+		
+		default:{
+			
+			throw new RuntimeException("Invalid Type" + type);
+		}
+		}
+	}
+	
+	private void getQueryProcessorValues(){
+		doubleSet = (TreeSet<Double>)((TreeSet<Double>)QueryProcessor.getValues(Types.DOUBLE)).clone();
+		intSet = (TreeSet<Integer>)((TreeSet<Integer>)QueryProcessor.getValues(Types.INTEGER)).clone();
+		stringSet = (TreeSet<String>)((TreeSet<String>)QueryProcessor.getValues(Types.VARCHAR)).clone();		
+	}
+	
 	private void initializeTable(String schemaFile) {
 		// load the H2 Driver
 		try {
@@ -64,8 +120,24 @@ public class InstanceTester {
 			e.printStackTrace();
 		}
 	}
+	
+	private void padConstraintValues(){
+		while(doubleSet.size() < MIN_NUM_CONSTRAINTS){
+			doubleSet.add(EntryPoint.random.nextDouble());
+		}
+		
+		while(intSet.size() < MIN_NUM_CONSTRAINTS){
+			intSet.add(EntryPoint.random.nextInt());
+		}
+		
+		while(stringSet.size() < MIN_NUM_CONSTRAINTS){
+			stringSet.add(ColumnConstraints.randomString(100));
+			//TODO change to the min size of varchars we see
+		}
+	}
 
 	private void determineConstraints() {
+		
 		// We will now query the system views (i.e. the information_schema)
 		// to see what is in the user provided schema.
 		try {
@@ -83,12 +155,11 @@ public class InstanceTester {
 			rsTab.close();
 
 			for (String tableName : tableNames) {
-				TableConstraints ts = new TableConstraints(tableName);
-				System.out.println("adding table: " + tableName);
+				TableConstraints ts = new TableConstraints(tableName, this);
 
 				// query for the columns of the current table
 				ResultSet rsCol = stmt
-						.executeQuery("SELECT column_name, data_type, is_nullable "
+						.executeQuery("SELECT column_name, data_type, is_nullable, character_maximum_length "
 								+ "FROM information_schema.columns "
 								+ "WHERE table_schema = 'PUBLIC' "
 								+ "  AND table_name = '"
@@ -99,9 +170,8 @@ public class InstanceTester {
 					String columnName = rsCol.getString(1);
 					int dataType = rsCol.getInt(2);
 					boolean isNullable = rsCol.getBoolean(3);
-					ts.addColumn(columnName, dataType, isNullable);
-					System.out.println("added column: " + columnName + " "
-							+ dataType + " " + isNullable);
+					int maxSize = rsCol.getInt(4);
+					ts.addColumn(columnName, dataType, isNullable, maxSize);
 				}
 				tableConstraints.put(tableName, ts);
 
@@ -140,17 +210,10 @@ public class InstanceTester {
 		}
 
 		// if the queries are different, save the instance to the out folder
-		if (isDiff) {
+		if (isDiff && numRows < minRows) {
 			EntryPoint.writeInstance(stmt);
+			minRows = numRows;
 		}
-	}
-
-	public InstanceTester(String schemaFile) {
-		initializeTable(schemaFile);
-		determineConstraints();
-		populateTables();
-		testEquality();
-
 	}
 
 	private void populateTables() {
@@ -173,7 +236,9 @@ public class InstanceTester {
 			for (String tableName : tableNames) {
 
 				System.out.println("inserting into " + tableName);
-				for (int numInserts = EntryPoint.random.nextInt(100); numInserts > 0; numInserts--) {
+				int numInserts = EntryPoint.random.nextInt(100);
+				numRows += numInserts;
+				for (; numInserts > 0; numInserts--) {
 					// for each table in the schema,
 					// we will generate an INSERT statement to create a tuple
 					StringBuilder insertSb = new StringBuilder();
@@ -183,7 +248,7 @@ public class InstanceTester {
 
 					// query for the columns of the current table
 					ResultSet rsCol = stmt
-							.executeQuery("SELECT column_name, data_type, is_nullable "
+							.executeQuery("SELECT column_name, data_type, is_nullable, character_maximum_length "
 									+ "FROM information_schema.columns "
 									+ "WHERE table_schema = 'PUBLIC' "
 									+ "  AND table_name = '"

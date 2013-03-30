@@ -19,7 +19,7 @@ public class QueryProcessor {
 	private static TreeSet<Double> doubleSet = new TreeSet<Double>();
 	private static TreeSet<Integer> intSet = new TreeSet<Integer>();
 	private static TreeSet<String> stringSet = new TreeSet<String>();
-
+	
 	/**
 	 * Process the query and extract all values we care about.
 	 * 
@@ -32,6 +32,12 @@ public class QueryProcessor {
 		extractNumberValues(query);
 	}
 	
+	
+	/**
+	 * 
+	 * @param type SQL value type
+	 * @return The set of values that are stored of the specified type
+	 */
 	public static Set getValues(int type){
 		switch (type){
 		case Types.DOUBLE:{
@@ -206,7 +212,7 @@ public class QueryProcessor {
 			}
 
 			// See what we're trying to match
-			quoteChar = query.charAt(startIdx);
+			quoteChar = query.charAt (startIdx);
 
 			endIdx = query.indexOf(quoteChar, startIdx + 1);
 
@@ -243,7 +249,7 @@ public class QueryProcessor {
 
 	public static void main(String[] args) {
 		QueryProcessor qp = new QueryProcessor();
-		qp.processQuery("SELECT id FROM T2 WHERE id > 0x5FA5 OR id < 17 AND NOT tag = \"tag:\\\"1\\\"\" AND name IN (SELECT * FROM T1 WHERE name LIKE \"Brian\" ' Poppy' OR AVG(score) + 20.0 > 5.5)");
+		qp.processQuery("");
 		System.out.println("Doubles: "
 				+ Arrays.toString(qp.doubleSet.toArray()));
 		System.out.println("Ints: " + Arrays.toString(qp.intSet.toArray()));
