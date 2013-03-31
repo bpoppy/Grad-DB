@@ -14,11 +14,14 @@ import java.util.TreeSet;
  * 
  */
 
+
+
 public class QueryProcessor {
 	
 	private static TreeSet<Double> doubleSet = new TreeSet<Double>();
 	private static TreeSet<Integer> intSet = new TreeSet<Integer>();
 	private static TreeSet<String> stringSet = new TreeSet<String>();
+
 	
 	/**
 	 * Process the query and extract all values we care about.
@@ -66,7 +69,6 @@ public class QueryProcessor {
 	 */
 	private static void extractNumberValues(String query) {
 		String[] tokens = query.split("\\s+");
-		System.out.println(Arrays.toString(tokens));
 		for (String tok : tokens) {
 			try {
 				double parsedValue;

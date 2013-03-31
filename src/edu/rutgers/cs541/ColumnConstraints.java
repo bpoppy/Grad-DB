@@ -6,10 +6,12 @@ import java.util.BitSet;
 import java.util.Set;
 import java.util.TreeSet;
 
+import com.sun.xml.internal.ws.api.pipe.NextAction;
+
 public class ColumnConstraints {
 
 	String name;
-	BitSet constraints;
+	boolean[] constraints;
 	int columnType;
 	boolean randomAllowed;
 	boolean nullable;
@@ -18,28 +20,28 @@ public class ColumnConstraints {
 	
 
 	public ColumnConstraints(String columnName, int columnType,
-			BitSet tableConstraints, Boolean randomAllowed, boolean nullable, int maxSize, InstanceTester tester) {
+			boolean[] tableConstraints, Boolean randomAllowed, boolean nullable, int maxSize, InstanceTester tester) {
 		this.name = columnName;
 		this.columnType = columnType;
 		this.maxSize = maxSize;
 		this.tester = tester;
 		
-		constraints = new BitSet(tableConstraints.length());
-		for (int i = 0; i < constraints.size(); i++) {
-			constraints.set(i, EntryPoint.random.nextBoolean());
+		constraints = new boolean[tableConstraints.length];
+		for (int i = 0; i < constraints.length; i++) {
+			constraints[i] = EntryPoint.random.nextBoolean() && tableConstraints[i];
 		}
-		constraints.and(tableConstraints);
 		
 		//TODO remove this and fix ranges of strings
 		if(columnType == Types.VARCHAR){
-			BitSet temp = new BitSet(constraints.length());
-			temp.set(0, (constraints.length() + 1) / 2);
-			constraints.and(temp);
+			for(int i = (constraints.length + 1) / 2; i < constraints.length; i++){
+				constraints[i] = false;
+			}
 		}
 
 		this.randomAllowed = randomAllowed && EntryPoint.random.nextBoolean();
 
-		if (constraints.cardinality() == 0)
+		
+		if (InstanceTester.cardinality(constraints) == 0)
 			this.randomAllowed = true;
 
 		this.nullable = nullable && EntryPoint.random.nextBoolean();
@@ -57,14 +59,14 @@ public class ColumnConstraints {
 		case Types.DOUBLE: {
 
 			if ((randomAllowed && EntryPoint.random.nextInt(10) == 0)
-					|| constraints.cardinality() == 0) {
+					|| InstanceTester.cardinality(constraints) == 0) {
 				return String.valueOf(EntryPoint.random.nextDouble());
 			}
 
-			int count = EntryPoint.random.nextInt(constraints.cardinality()) - 1;
+			int count = EntryPoint.random.nextInt(InstanceTester.cardinality(constraints)) - 1;
 			int idx;
-			for (idx = constraints.nextSetBit(0); idx >= 0 && count > 0; idx = constraints
-					.nextSetBit(idx + 1), count--)
+			for (idx = InstanceTester.nextSetBit(constraints, 0); idx >= 0 && count > 0; idx = InstanceTester.nextSetBit(constraints
+					, idx + 1), count--)
 				;
 
 			assert count == 0;
@@ -72,6 +74,7 @@ public class ColumnConstraints {
 			Object[] valuesArray = (Object[]) values.toArray();
 
 			if (idx < valuesArray.length) {
+				
 				return String.valueOf(valuesArray[idx]);
 			}
 
@@ -84,15 +87,14 @@ public class ColumnConstraints {
 		case Types.INTEGER: {
 			
 			if ((randomAllowed && EntryPoint.random.nextInt(10) == 0)
-					|| constraints.cardinality() == 0) {
-				System.out.println("random value selected");
+					|| InstanceTester.cardinality(constraints) == 0) {
 				return String.valueOf(EntryPoint.random.nextInt());
 			}
 
-			int count = EntryPoint.random.nextInt(constraints.cardinality()) - 1;
+			int count = EntryPoint.random.nextInt(InstanceTester.cardinality(constraints)) - 1;
 			int idx;
-			for (idx = constraints.nextSetBit(0); idx >= 0 && count > 0; idx = constraints
-					.nextSetBit(idx + 1), count--)
+			for (idx = InstanceTester.nextSetBit(constraints, 0); idx >= 0 && count > 0; idx = InstanceTester.nextSetBit(constraints
+					, idx + 1), count--)
 				;
 
 			assert count == 0;
@@ -103,13 +105,8 @@ public class ColumnConstraints {
 				return String.valueOf(valuesArray[idx]);
 			}
 
-			System.out.println(constraints.toString());
-			System.out.println("size "+ constraints + " " + constraints.size() + "  " + constraints.length());
 			
 			
-			System.out.println("cardinality " + constraints.cardinality());
-			System.out.println(Arrays.toString(valuesArray));
-			System.out.println(valuesArray[idx]);
 
 			idx -= valuesArray.length;
 			return String
@@ -119,21 +116,19 @@ public class ColumnConstraints {
 
 		case Types.VARCHAR: {
 
-			if ((randomAllowed && EntryPoint.random.nextInt(10) == 0)
-					|| constraints.cardinality() == 0) {
+			if ((randomAllowed && EntryPoint.random.nextInt(4) == 0)
+					|| InstanceTester.cardinality(constraints) == 0) {
 				return randomString(maxSize);
 			}
 
-			int count = EntryPoint.random.nextInt(constraints.cardinality()) - 1;
+			int count = EntryPoint.random.nextInt(InstanceTester.cardinality(constraints)) - 1;
 			int idx;
-			System.out.println(constraints.cardinality());
-			for (idx = constraints.nextSetBit(0); idx >= 0 && count > 0; idx = constraints
-					.nextSetBit(idx + 1), count--)
+			for (idx = InstanceTester.nextSetBit(constraints, 0); idx >= 0 && count > 0; idx = InstanceTester.nextSetBit(constraints
+					, idx + 1), count--)
 				;
 
 			assert count == 0;
 
-			System.out.println(idx + " " + values.getClass() + "  " + values.toString() );
 			Object[] valuesArray = (Object[]) values.toArray();
 
 			if (idx < valuesArray.length) {

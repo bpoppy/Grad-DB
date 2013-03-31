@@ -13,7 +13,7 @@ import java.util.HashMap;
 public class TableConstraints {
 	private String name;
 
-	private HashMap<Integer, BitSet> valuesInTable = new HashMap<Integer, BitSet>(); // Which ranges of values
+	private HashMap<Integer, boolean[]> valuesInTable = new HashMap<Integer, boolean[]>(); // Which ranges of values
 													// are
 	// allowed in the table
 	private HashMap<Integer, Boolean> randomValuesInTable = new HashMap<Integer, Boolean>(); // Whether random
@@ -31,20 +31,21 @@ public class TableConstraints {
 	private void determineValuesAllowed(int dataType) {
 		boolean randomAllowed = EntryPoint.random.nextBoolean();
 		int valuesSize = tester.getValues(dataType).size();
-		BitSet bs = new BitSet();
+		boolean[] bs = new boolean[0];
 
 		if (valuesSize > 0) {
-			bs = new BitSet(2 * valuesSize - 1); // Have a boolean value for
+			bs = new boolean[2 * valuesSize - 1]; // Have a boolean value for
 													// each value and each
 													// exclusive range between
 													// them
+			
 
-			for (int i = 0; i < bs.size(); i++) {
-				bs.set(i, EntryPoint.random.nextBoolean());
+			for (int i = 0; i < bs.length; i++) {
+				bs[i] = EntryPoint.random.nextBoolean();
 			}
 
 		}
-		if (bs.cardinality() == 0)
+		if (InstanceTester.cardinality(bs) == 0)
 			randomAllowed = true;
 		valuesInTable.put(dataType, bs);
 		randomValuesInTable.put(dataType, randomAllowed);

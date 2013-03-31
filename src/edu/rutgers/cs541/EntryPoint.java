@@ -6,8 +6,13 @@ import java.io.IOException;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -31,6 +36,8 @@ public class EntryPoint {
 	private static String outputDirectory;
 
 	private static String schemaFile;
+	
+	public static int numColumns = 0;
 
 	/**
 	 * This is the main method, where execution begins
@@ -68,7 +75,100 @@ public class EntryPoint {
 			new InstanceTester(schemaFile);
 		}
 	}
+	
+	private void initializeTable(String schemaFile) {
+		Connection conn;
+		// load the H2 Driver
+		try {
+			Class.forName("org.h2.Driver");
+		} catch (ClassNotFoundException e) {
+			System.err.println("Unable to load H2 driver");
+			e.printStackTrace();
+			// croak
+			System.exit(1);
+		}
 
+		// credentials do not really matter
+		// since the database will be private
+		String dbUser = "dummy";
+		String dbPassword = "password";
+
+		Statement stmt = null;
+
+		// This is the URL to create an H2 private In-Memory DB
+		String dbUrl = "jdbc:h2:mem:";
+
+		try {
+			// create a connection to the H2 database
+			// since the DB does not already exist, it will be created
+			// automatically
+			// http://www.h2database.com/html/features.html#in_memory_databases
+			conn = DriverManager.getConnection(dbUrl, dbUser, dbPassword);
+
+			// create a statement to execute queries
+			stmt = conn.createStatement();
+		} catch (SQLException e) {
+			System.err.println("Unable to initialize H2 database");
+			e.printStackTrace();
+		}
+
+		// H2 has a nice command allowing us to run a series of
+		// queries from file.
+		// http://www.h2database.com/html/grammar.html#runscript
+		// We will use it here to run the user-supplied schema script.
+		try {
+			stmt.execute("RUNSCRIPT FROM '" + schemaFile + "'");
+		} catch (SQLException e) {
+			System.err.println("Unable to load the schema script \""
+					+ schemaFile + "\"");
+			e.printStackTrace();
+		}
+
+
+		// We will now query the system views (i.e. the information_schema)
+		// to see what is in the user provided schema.
+		try {
+			// see what tables are in the schema
+			// (note that the user schema is called PUBLIC by default)
+			ResultSet rsTab = stmt.executeQuery("SELECT table_name "
+					+ "FROM information_schema.tables "
+					+ "WHERE table_schema = 'PUBLIC'");
+
+			List<String> tableNames = new ArrayList<String>();
+			while (rsTab.next()) {
+				// note that column indexing starts from 1
+				tableNames.add(rsTab.getString(1));
+			}
+			rsTab.close();
+
+			for (String tableName : tableNames) {
+
+				// query for the columns of the current table
+				ResultSet rsCol = stmt
+						.executeQuery("SELECT column_name, data_type, is_nullable, character_maximum_length "
+								+ "FROM information_schema.columns "
+								+ "WHERE table_schema = 'PUBLIC' "
+								+ "  AND table_name = '"
+								+ tableName
+								+ "'"
+								+ "ORDER BY ordinal_position");
+				while (rsCol.next()) {
+					String columnName = rsCol.getString(1);
+					int dataType = rsCol.getInt(2);
+					boolean isNullable = rsCol.getBoolean(3);
+					int maxSize = rsCol.getInt(4);
+					numColumns ++;
+				}
+
+				rsCol.close();
+			}
+
+		} catch (SQLException e) {
+			System.err.println("Unable to generate instance");
+			e.printStackTrace();
+		}
+	}
+	
 	/**
 	 * Read the contents of a file into a string Terminate program if unable to
 	 * do so

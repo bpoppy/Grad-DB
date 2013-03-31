@@ -15,22 +15,17 @@ import java.util.TreeSet;
 
 public class InstanceTester {
 
-	private final static int MIN_NUM_CONSTRAINTS = 10;
-	
 	private Connection conn = null;
 	private Statement stmt;
 
-	
 	private static int minRows = Integer.MAX_VALUE;
 	private int numRows = 0;
-	
+
 	private HashMap<String, TableConstraints> tableConstraints = new HashMap<String, TableConstraints>();
 
 	private TreeSet<Double> doubleSet = new TreeSet<Double>();
 	private TreeSet<Integer> intSet = new TreeSet<Integer>();
 	private TreeSet<String> stringSet = new TreeSet<String>();
-	
-	
 
 	public InstanceTester(String schemaFile) {
 		getQueryProcessorValues();
@@ -40,39 +35,62 @@ public class InstanceTester {
 		populateTables();
 		testEquality();
 	}
-	
+
+	public static int cardinality(boolean[] array) {
+		int count = 0;
+		for (int i = 0; i < array.length; i++) {
+			if (array[i])
+				count++;
+		}
+		return count;
+	}
+
+	public static int nextSetBit(boolean[] array, int start) {
+		for (int i = start; i < array.length; i++) {
+			if (array[i] == true) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
 	/**
 	 * 
-	 * @param type SQL value type
+	 * @param type
+	 *            SQL value type
 	 * @return The set of values that are stored of the specified type
 	 */
-	public Set getValues(int type){
-		switch (type){
-		case Types.DOUBLE:{
+	public Set getValues(int type) {
+		switch (type) {
+		case Types.DOUBLE: {
 			return doubleSet;
 		}
 
-		case Types.VARCHAR:{
+		case Types.VARCHAR: {
 			return stringSet;
 		}
 
-		case Types.INTEGER:{
+		case Types.INTEGER: {
 			return intSet;
 		}
-		
-		default:{
-			
+
+		default: {
+
 			throw new RuntimeException("Invalid Type" + type);
 		}
 		}
 	}
 	
-	private void getQueryProcessorValues(){
-		doubleSet = (TreeSet<Double>)((TreeSet<Double>)QueryProcessor.getValues(Types.DOUBLE)).clone();
-		intSet = (TreeSet<Integer>)((TreeSet<Integer>)QueryProcessor.getValues(Types.INTEGER)).clone();
-		stringSet = (TreeSet<String>)((TreeSet<String>)QueryProcessor.getValues(Types.VARCHAR)).clone();		
+
+	private void getQueryProcessorValues() {
+		doubleSet = (TreeSet<Double>) ((TreeSet<Double>) QueryProcessor
+				.getValues(Types.DOUBLE)).clone();
+		intSet = (TreeSet<Integer>) ((TreeSet<Integer>) QueryProcessor
+				.getValues(Types.INTEGER)).clone();
+		stringSet = (TreeSet<String>) ((TreeSet<String>) QueryProcessor
+				.getValues(Types.VARCHAR)).clone();
 	}
-	
+
 	private void initializeTable(String schemaFile) {
 		// load the H2 Driver
 		try {
@@ -120,24 +138,24 @@ public class InstanceTester {
 			e.printStackTrace();
 		}
 	}
-	
-	private void padConstraintValues(){
-		while(doubleSet.size() < MIN_NUM_CONSTRAINTS){
+
+	private void padConstraintValues() {
+		while (doubleSet.size() < EntryPoint.numColumns) {
 			doubleSet.add(EntryPoint.random.nextDouble());
 		}
-		
-		while(intSet.size() < MIN_NUM_CONSTRAINTS){
+
+		while (intSet.size() < EntryPoint.numColumns) {
 			intSet.add(EntryPoint.random.nextInt());
 		}
-		
-		while(stringSet.size() < MIN_NUM_CONSTRAINTS){
+
+		while (stringSet.size() < EntryPoint.numColumns) {
 			stringSet.add(ColumnConstraints.randomString(100));
-			//TODO change to the min size of varchars we see
+			// TODO change to the min size of varchars we see
 		}
 	}
 
 	private void determineConstraints() {
-		
+
 		// We will now query the system views (i.e. the information_schema)
 		// to see what is in the user provided schema.
 		try {
@@ -235,7 +253,6 @@ public class InstanceTester {
 
 			for (String tableName : tableNames) {
 
-				System.out.println("inserting into " + tableName);
 				int numInserts = EntryPoint.random.nextInt(100);
 				numRows += numInserts;
 				for (; numInserts > 0; numInserts--) {
@@ -247,18 +264,14 @@ public class InstanceTester {
 					insertSb.append(" VALUES (");
 
 					// query for the columns of the current table
-					ResultSet rsCol = stmt
-							.executeQuery("SELECT column_name, data_type, is_nullable, character_maximum_length "
-									+ "FROM information_schema.columns "
-									+ "WHERE table_schema = 'PUBLIC' "
-									+ "  AND table_name = '"
-									+ tableName
-									+ "'"
-									+ "ORDER BY ordinal_position");
+					ResultSet rsCol = stmt.executeQuery("SELECT column_name "
+							+ "FROM information_schema.columns "
+							+ "WHERE table_schema = 'PUBLIC' "
+							+ "  AND table_name = '" + tableName + "'"
+							+ "ORDER BY ordinal_position");
 					int colNum = 1;
 					while (rsCol.next()) {
 						String columnName = rsCol.getString(1);
-						System.out.println(columnName + "  type:" + tableConstraints.get(tableName).getColumnConstraints(columnName).columnType);
 
 						if (colNum++ != 1) {
 							insertSb.append(", ");
@@ -272,8 +285,13 @@ public class InstanceTester {
 					insertSb.append(")");
 					rsCol.close();
 
-					// execute the INSERT statement to add a tuple to the table
-					stmt.executeUpdate(insertSb.toString());
+
+					try {
+						// execute the INSERT statement to add a tuple to the
+						// table
+						stmt.executeUpdate(insertSb.toString());
+					} catch (Exception ex) {
+					}
 				}
 			}
 
