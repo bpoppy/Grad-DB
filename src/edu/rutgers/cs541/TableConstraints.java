@@ -23,6 +23,15 @@ public class TableConstraints {
 	private HashMap<String, ColumnConstraints> columnConstraints = new HashMap<String, ColumnConstraints>();
 
 	private InstanceTester tester;
+	
+	public TableConstraints(String name, InstanceTester tester) {
+		this.name = name;
+		this.tester = tester;
+		determineValuesAllowed(Types.DOUBLE);
+		determineValuesAllowed(Types.INTEGER);
+		determineValuesAllowed(Types.VARCHAR);
+	}
+
 
 	public ColumnConstraints getColumnConstraints(String name) {
 		return columnConstraints.get(name);
@@ -49,14 +58,6 @@ public class TableConstraints {
 			randomAllowed = true;
 		valuesInTable.put(dataType, bs);
 		randomValuesInTable.put(dataType, randomAllowed);
-	}
-
-	public TableConstraints(String name, InstanceTester tester) {
-		this.name = name;
-		this.tester = tester;
-		determineValuesAllowed(Types.DOUBLE);
-		determineValuesAllowed(Types.INTEGER);
-		determineValuesAllowed(Types.VARCHAR);
 	}
 
 	public void addColumn(String columnName, int columnType, boolean nullable, int maxSize) {

@@ -21,6 +21,8 @@ public class QueryProcessor {
 	private static TreeSet<Double> doubleSet = new TreeSet<Double>();
 	private static TreeSet<Integer> intSet = new TreeSet<Integer>();
 	private static TreeSet<String> stringSet = new TreeSet<String>();
+	
+	public static Object constraintLock = new Object();
 
 	
 	/**

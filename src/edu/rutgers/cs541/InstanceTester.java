@@ -27,9 +27,9 @@ public class InstanceTester {
 	private TreeSet<Integer> intSet = new TreeSet<Integer>();
 	private TreeSet<String> stringSet = new TreeSet<String>();
 
-	public InstanceTester(String schemaFile) {
+	public InstanceTester(String schemaFile, int minimumDataPoints) {
 		getQueryProcessorValues();
-		padConstraintValues();
+		padConstraintValues(minimumDataPoints);
 		initializeTable(schemaFile);
 		determineConstraints();
 		populateTables();
@@ -82,7 +82,8 @@ public class InstanceTester {
 	}
 	
 
-	private void getQueryProcessorValues() {
+	@SuppressWarnings("unchecked")
+	private synchronized void getQueryProcessorValues() {
 		doubleSet = (TreeSet<Double>) ((TreeSet<Double>) QueryProcessor
 				.getValues(Types.DOUBLE)).clone();
 		intSet = (TreeSet<Integer>) ((TreeSet<Integer>) QueryProcessor
@@ -139,18 +140,17 @@ public class InstanceTester {
 		}
 	}
 
-	private void padConstraintValues() {
-		while (doubleSet.size() < EntryPoint.numColumns) {
+	private void padConstraintValues(int minConstraints) {
+		while (doubleSet.size() < minConstraints) {
 			doubleSet.add(EntryPoint.random.nextDouble());
 		}
 
-		while (intSet.size() < EntryPoint.numColumns) {
+		while (intSet.size() < minConstraints) {
 			intSet.add(EntryPoint.random.nextInt());
 		}
 
-		while (stringSet.size() < EntryPoint.numColumns) {
+		while (stringSet.size() < minConstraints) {
 			stringSet.add(ColumnConstraints.randomString(100));
-			// TODO change to the min size of varchars we see
 		}
 	}
 

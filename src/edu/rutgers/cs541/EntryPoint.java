@@ -1,3 +1,4 @@
+// TODO BEFORE COKE
 package edu.rutgers.cs541;
 
 import java.io.File;
@@ -37,6 +38,8 @@ public class EntryPoint {
 
 	private static String schemaFile;
 	
+	private static Runnable[] runners = new Runnable[4];
+	
 	public static int numColumns = 0;
 
 	/**
@@ -66,17 +69,19 @@ public class EntryPoint {
 		QueryProcessor.processQuery(query1);
 		QueryProcessor.processQuery(query2);
 		
+		initializeTable(schemaFile);
 		
 		
-		int count = 0;
-		
-		while(true){
-			System.out.println("run " + count++);
-			new InstanceTester(schemaFile);
+		for(int i = 0; i < EntryPoint.runners.length; i++) {
+			EntryPoint.runners[i] = new TestThread(schemaFile);
 		}
+		for(int i = 0; i < EntryPoint.runners.length; i++) {
+			EntryPoint.runners[i].run();
+		}
+		
 	}
 	
-	private void initializeTable(String schemaFile) {
+	private static void initializeTable(String schemaFile) {
 		Connection conn;
 		// load the H2 Driver
 		try {
@@ -153,10 +158,6 @@ public class EntryPoint {
 								+ "'"
 								+ "ORDER BY ordinal_position");
 				while (rsCol.next()) {
-					String columnName = rsCol.getString(1);
-					int dataType = rsCol.getInt(2);
-					boolean isNullable = rsCol.getBoolean(3);
-					int maxSize = rsCol.getInt(4);
 					numColumns ++;
 				}
 
@@ -210,7 +211,7 @@ public class EntryPoint {
 		return rv;
 	}
 
-	public static void writeInstance(Statement stmt) {
+	public static synchronized void writeInstance(Statement stmt) {
 
 		// use the user-supplied directory (last command line argument)
 		String outPath = new File(outputDirectory, (++solutionsFound) + ".sql")
