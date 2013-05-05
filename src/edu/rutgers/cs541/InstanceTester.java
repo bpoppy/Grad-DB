@@ -12,26 +12,35 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class InstanceTester {
 
 	private Connection conn = null;
 	private Statement stmt;
 
-	private static int minRows = Integer.MAX_VALUE;
+	public static AtomicInteger minRows = new AtomicInteger(Integer.MAX_VALUE);
+	
+	
 	private int numRows = 0;
 
 	private HashMap<String, TableConstraints> tableConstraints = new HashMap<String, TableConstraints>();
-
+	private HashMap<String, Integer> tableSizes = new HashMap<String, Integer>();
+	
 	private TreeSet<Double> doubleSet = new TreeSet<Double>();
 	private TreeSet<Integer> intSet = new TreeSet<Integer>();
 	private TreeSet<String> stringSet = new TreeSet<String>();
 
-	public InstanceTester(String schemaFile, int minimumDataPoints) {
+	public InstanceTester(String schemaFile, int minimumDataPoints, int maxTuples) {
 		getQueryProcessorValues();
 		padConstraintValues(minimumDataPoints);
 		initializeTable(schemaFile);
 		determineConstraints();
+		for(String tableName : tableConstraints.keySet()){
+			int tableSize = EntryPoint.random.nextInt(maxTuples);
+			maxTuples -= tableSize;
+			tableSizes.put(tableName,  tableSize);
+		}
 		populateTables();
 		testEquality();
 	}
@@ -230,9 +239,9 @@ public class InstanceTester {
 		EntryPoint.examplesTested.incrementAndGet();
 
 		// if the queries are different, save the instance to the out folder
-		if (isDiff && numRows < minRows) {
+		if (isDiff && numRows < minRows.get()) {
 			EntryPoint.writeInstance(stmt);
-			minRows = numRows;
+			minRows.set(numRows);
 		}
 	}
 
@@ -255,7 +264,7 @@ public class InstanceTester {
 
 			for (String tableName : tableNames) {
 
-				int numInserts = EntryPoint.random.nextInt(100);
+				int numInserts = tableSizes.get(tableName);
 				numRows += numInserts;
 				for (; numInserts > 0; numInserts--) {
 					// for each table in the schema,
