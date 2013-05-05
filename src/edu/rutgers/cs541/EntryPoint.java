@@ -75,8 +75,8 @@ public class EntryPoint {
 
 		outputDirectory = args[3];
 
-		QueryProcessor.processQuery(query1);
-		QueryProcessor.processQuery(query2);
+		QueryProcessor.processQuery(schemaFile, query1);
+		QueryProcessor.processQuery(schemaFile, query2);
 		
 		initializeTable(schemaFile);
 		

@@ -80,7 +80,6 @@ public class InstanceTester {
 		}
 		}
 	}
-	
 
 	@SuppressWarnings("unchecked")
 	private synchronized void getQueryProcessorValues() {
@@ -189,7 +188,8 @@ public class InstanceTester {
 					int dataType = rsCol.getInt(2);
 					boolean isNullable = rsCol.getBoolean(3);
 					int maxSize = rsCol.getInt(4);
-					ts.addColumn(columnName, dataType, isNullable, maxSize);
+					if (QueryProcessor.usefulColumns.contains(columnName))
+						ts.addColumn(columnName, dataType, isNullable, maxSize);
 				}
 				tableConstraints.put(tableName, ts);
 
@@ -226,7 +226,7 @@ public class InstanceTester {
 			System.err.println("Unable to perform check for query differences");
 			e.printStackTrace();
 		}
-		
+
 		EntryPoint.examplesTested.incrementAndGet();
 
 		// if the queries are different, save the instance to the out folder
@@ -275,18 +275,20 @@ public class InstanceTester {
 					while (rsCol.next()) {
 						String columnName = rsCol.getString(1);
 
-						if (colNum++ != 1) {
-							insertSb.append(", ");
-						}
+						if (QueryProcessor.usefulColumns.contains(columnName)) {
+							if (colNum++ != 1) {
+								insertSb.append(", ");
+							}
 
-						// generate a value appropriate for the column's type
-						insertSb.append(tableConstraints.get(tableName)
-								.getColumnConstraints(columnName)
-								.getValueString());
+							// generate a value appropriate for the column's
+							// type
+							insertSb.append(tableConstraints.get(tableName)
+									.getColumnConstraints(columnName)
+									.getValueString());
+						}
 					}
 					insertSb.append(")");
 					rsCol.close();
-
 
 					try {
 						// execute the INSERT statement to add a tuple to the
