@@ -21,39 +21,39 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * This is a sample class intended to demonstrate how to parse command-line
  * options and how to start an H2 In-Memory Database
- * 
+ *
  * You are free to change the contents of this file completely (and add any
  * additional classes), but your main() method must be in
  * edu.rutgers.cs541.EntryPoint
- * 
+ *
  * @author yaros
  */
 public class EntryPoint {
- 
-	
+
+
 	public static Random random = new Random();
 
 	public static String query1, query2;
-	
+
 	private final static int NUM_THREADS = 4;
-	
+
 
 	private static int solutionsFound = 0;
 	public static  AtomicInteger examplesTested = new AtomicInteger();
 	private static String outputDirectory;
-	
+
 	private static String schemaFile;
-	
+
 	private static Runnable[] runners = new Runnable[NUM_THREADS];
 	private static Thread[] threads = new Thread[NUM_THREADS];
-	
+
 	public static int numColumns = 0;
-	
-	
+
+
 
 	/**
 	 * This is the main method, where execution begins
-	 * 
+	 *
 	 * @param args
 	 *            - command line arguments
 	 */
@@ -77,10 +77,10 @@ public class EntryPoint {
 
 		QueryProcessor.processQuery(query1);
 		QueryProcessor.processQuery(query2);
-		
+
 		initializeTable(schemaFile);
-		
-		
+
+
 		for(int i = 0; i < NUM_THREADS; i++) {
 			EntryPoint.runners[i] = new TestThread(schemaFile);
 		}
@@ -88,9 +88,9 @@ public class EntryPoint {
 			EntryPoint.threads[i] = new Thread(runners[i]);
 			EntryPoint.threads[i].run();
 		}
-		
+
 	}
-	
+
 	private static void initializeTable(String schemaFile) {
 		Connection conn;
 		// load the H2 Driver
@@ -179,15 +179,15 @@ public class EntryPoint {
 			e.printStackTrace();
 		}
 	}
-	
+
 	/**
 	 * Read the contents of a file into a string Terminate program if unable to
 	 * do so
-	 * 
+	 *
 	 * @param fileName
 	 *            - name of file to be read
 	 */
-	private static String readFileOrDie(String fileName) {
+	public static String readFileOrDie(String fileName) {
 		// using fast way to read a file into a string:
 		// http://stackoverflow.com/questions/326390/how-to-create-a-java-string-from-the-contents-of-a-file/326440#326440
 
@@ -215,7 +215,8 @@ public class EntryPoint {
 
 		if (rv == null) {
 			// must not have been able to read file, so croak
-			System.exit(1);
+			return "";
+//			System.exit(1);
 		}
 
 		return rv;
