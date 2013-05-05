@@ -1,7 +1,6 @@
 package edu.rutgers.cs541;
 
 import java.sql.Types;
-import java.util.BitSet;
 import java.util.HashMap;
 
 /**

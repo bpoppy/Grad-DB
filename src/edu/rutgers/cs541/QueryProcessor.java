@@ -115,24 +115,6 @@ public class QueryProcessor {
 		return query;
 	}
 
-	/**
-	 * 
-	 * @param query
-	 *            the query
-	 * @return modified query qith parens replaced with spaces
-	 */
-	private static String removeParens(String query) {
-		while (query.indexOf('(') >= 0)
-			query = query.substring(0, query.indexOf('(')) + ' '
-					+ query.substring(query.indexOf('(') + 1);
-
-		while (query.indexOf(')') >= 0) {
-			query = query.substring(0, query.indexOf(')')) + ' '
-					+ query.substring(query.indexOf(')') + 1);
-		}
-
-		return query;
-	}
 
 	/**
 	 * 

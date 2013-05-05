@@ -1,12 +1,7 @@
 package edu.rutgers.cs541;
 
 import java.sql.Types;
-import java.util.Arrays;
-import java.util.BitSet;
 import java.util.Set;
-import java.util.TreeSet;
-
-import com.sun.xml.internal.ws.api.pipe.NextAction;
 
 public class ColumnConstraints {
 
