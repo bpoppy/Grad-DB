@@ -188,7 +188,7 @@ public class InstanceTester {
 					int dataType = rsCol.getInt(2);
 					boolean isNullable = rsCol.getBoolean(3);
 					int maxSize = rsCol.getInt(4);
-					if (QueryProcessor.usefulColumns.contains(columnName))
+					if (QueryProcessor.usefulColumns.contains(columnName.toLowerCase()))
 						ts.addColumn(columnName, dataType, isNullable, maxSize);
 				}
 				tableConstraints.put(tableName, ts);
@@ -266,7 +266,7 @@ public class InstanceTester {
 					insertSb.append(" VALUES (");
 
 					// query for the columns of the current table
-					ResultSet rsCol = stmt.executeQuery("SELECT column_name "
+					ResultSet rsCol = stmt.executeQuery("SELECT column_name, data_type "
 							+ "FROM information_schema.columns "
 							+ "WHERE table_schema = 'PUBLIC' "
 							+ "  AND table_name = '" + tableName + "'"
@@ -274,17 +274,22 @@ public class InstanceTester {
 					int colNum = 1;
 					while (rsCol.next()) {
 						String columnName = rsCol.getString(1);
+						int dataType = rsCol.getInt(2);
+						
 
-						if (QueryProcessor.usefulColumns.contains(columnName)) {
-							if (colNum++ != 1) {
-								insertSb.append(", ");
-							}
+						if (colNum++ != 1) {
+							insertSb.append(", ");
+						}
+
+						if (QueryProcessor.usefulColumns.contains(columnName.toLowerCase())) {
 
 							// generate a value appropriate for the column's
 							// type
 							insertSb.append(tableConstraints.get(tableName)
 									.getColumnConstraints(columnName)
 									.getValueString());
+						} else{
+							insertSb.append(defaultValue(dataType));
 						}
 					}
 					insertSb.append(")");
@@ -304,6 +309,23 @@ public class InstanceTester {
 			e.printStackTrace();
 		}
 	}
+	
+	public Object defaultValue(int dataType){
+		switch(dataType){
+		case Types.VARCHAR:{
+			return "\"A\"";
+		} 
+		case Types.INTEGER:{
+			return "0";
+		}
+		case Types.DOUBLE:{
+			return "0";
+		}
+		default:
+			return "0";
+		}
+	}
+	
 
 	/**
 	 * Augment the query by grouping all columns in the Result Set and adding a

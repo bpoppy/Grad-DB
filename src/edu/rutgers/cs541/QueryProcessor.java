@@ -43,18 +43,21 @@ public class QueryProcessor {
 	public static void processQuery(String schema, String query) {
 		if(allColumns == null){
 			findAllColumns(schema);
+			System.out.println(Arrays.toString(allColumns.toArray()));
 		}
 		query = extractStrings(query);
 		query = replaceOperators(query);
 		extractNumberValues(query);
 		findUsefulColumns(query);
+		System.out.println(Arrays.toString(usefulColumns.toArray()));
 	}
 
 	private static void findUsefulColumns(String query) {
 		String[] tokens = query.split("\\s");
+		System.out.println(query);
 		for(String str : tokens){
 			if(allColumns.contains(str)){
-				usefulColumns.add(str);
+				usefulColumns.add(str.toLowerCase());
 			}
 		}
 	}
@@ -137,7 +140,7 @@ public class QueryProcessor {
 								+ "ORDER BY ordinal_position");
 				while (rsCol.next()) {
 					String columnName = rsCol.getString(1);
-					allColumns.add(columnName);
+					allColumns.add(columnName.toLowerCase());
 				}
 
 				rsCol.close();
@@ -218,7 +221,7 @@ public class QueryProcessor {
 	 *         remove parens and the like if we want to evaluate expressions.
 	 */
 	private static String replaceOperators(String query) {
-		Character[] charSet = { '(', ')', '+', '/', '=', '[', ']', '*', '-' };
+		Character[] charSet = { '(', ')', '+', '/', '=', '[', ']', '*', '-', '.'};
 		for (Character ch : charSet) {
 			while (query.indexOf(ch) >= 0) {
 				query = query.substring(0, query.indexOf(ch)) + ' '
