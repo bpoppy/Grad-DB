@@ -10,7 +10,7 @@ public class TestThread implements Runnable{
 	
 	public void run() {
 		while(true) {
-			new InstanceTester(schemaFile, EntryPoint.random.nextInt(EntryPoint.numColumns) + 1);
+			new InstanceTester(schemaFile, EntryPoint.random.nextInt(EntryPoint.numColumns) + 1, Math.min(InstanceTester.minRows.get(), 1000));
 		}
 	}
 
