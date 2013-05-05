@@ -37,7 +37,7 @@ public class ResultTableModel extends AbstractTableModel {
 		this.fireTableDataChanged();
 	}
 
-	public void getResult(int row) {
+	public String[] getResult(int row) {
 		return this.data.get(row);
 	}
 }
