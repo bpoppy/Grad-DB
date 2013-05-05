@@ -1,7 +1,14 @@
 package edu.rutgers.cs541;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -14,51 +21,160 @@ import java.util.TreeSet;
  * 
  */
 
-
-
 public class QueryProcessor {
-	
+
+
 	private static TreeSet<Double> doubleSet = new TreeSet<Double>();
 	private static TreeSet<Integer> intSet = new TreeSet<Integer>();
 	private static TreeSet<String> stringSet = new TreeSet<String>();
 	
+
 	public static Object constraintLock = new Object();
 
-	
+	private static TreeSet<String> allColumns = null;
+	public static  TreeSet<String> usefulColumns = new TreeSet<String>();
+
 	/**
 	 * Process the query and extract all values we care about.
 	 * 
 	 * @param query
 	 *            the query
 	 */
-	public static void processQuery(String query) {
+	public static void processQuery(String schema, String query) {
+		if(allColumns == null){
+			findAllColumns(schema);
+			System.out.println(Arrays.toString(allColumns.toArray()));
+		}
 		query = extractStrings(query);
 		query = replaceOperators(query);
 		extractNumberValues(query);
+		findUsefulColumns(query);
+		System.out.println(Arrays.toString(usefulColumns.toArray()));
 	}
-	
-	
+
+	private static void findUsefulColumns(String query) {
+		String[] tokens = query.split("\\s");
+		System.out.println(query);
+		for(String str : tokens){
+			if(allColumns.contains(str)){
+				usefulColumns.add(str.toLowerCase());
+			}
+		}
+	}
+
+	public static void findAllColumns(String schemaFile) {
+		allColumns = new TreeSet<String>();
+
+		try {
+			Connection conn = null;
+			Statement stmt;
+			// load the H2 Driver
+			try {
+				Class.forName("org.h2.Driver");
+			} catch (ClassNotFoundException e) {
+				System.err.println("Unable to load H2 driver");
+				e.printStackTrace();
+				// croak
+				System.exit(1);
+			}
+
+			// credentials do not really matter
+			// since the database will be private
+			String dbUser = "dummy";
+			String dbPassword = "password";
+
+			stmt = null;
+
+			// This is the URL to create an H2 private In-Memory DB
+			String dbUrl = "jdbc:h2:mem:";
+
+			try {
+				// create a connection to the H2 database
+				// since the DB does not already exist, it will be created
+				// automatically
+				// http://www.h2database.com/html/features.html#in_memory_databases
+				conn = DriverManager.getConnection(dbUrl, dbUser, dbPassword);
+
+				// create a statement to execute queries
+				stmt = conn.createStatement();
+			} catch (SQLException e) {
+				System.err.println("Unable to initialize H2 database");
+				e.printStackTrace();
+			}
+
+			// H2 has a nice command allowing us to run a series of
+			// queries from file.
+			// http://www.h2database.com/html/grammar.html#runscript
+			// We will use it here to run the user-supplied schema script.
+			try {
+				stmt.execute("RUNSCRIPT FROM '" + schemaFile + "'");
+			} catch (SQLException e) {
+				System.err.println("Unable to load the schema script \""
+						+ schemaFile + "\"");
+				e.printStackTrace();
+			}
+
+			// see what tables are in the schema
+			// (note that the user schema is called PUBLIC by default)
+			ResultSet rsTab = stmt.executeQuery("SELECT table_name "
+					+ "FROM information_schema.tables "
+					+ "WHERE table_schema = 'PUBLIC'");
+
+			List<String> tableNames = new ArrayList<String>();
+			while (rsTab.next()) {
+				// note that column indexing starts from 1
+				tableNames.add(rsTab.getString(1));
+			}
+			rsTab.close();
+
+			for (String tableName : tableNames) {
+
+				// query for the columns of the current table
+				ResultSet rsCol = stmt
+						.executeQuery("SELECT column_name, data_type, is_nullable, character_maximum_length "
+								+ "FROM information_schema.columns "
+								+ "WHERE table_schema = 'PUBLIC' "
+								+ "  AND table_name = '"
+								+ tableName
+								+ "'"
+								+ "ORDER BY ordinal_position");
+				while (rsCol.next()) {
+					String columnName = rsCol.getString(1);
+					allColumns.add(columnName.toLowerCase());
+				}
+
+				rsCol.close();
+			}
+
+		} catch (SQLException e) {
+			System.err.println("Unable to generate instance");
+			e.printStackTrace();
+		}
+
+	}
+
 	/**
 	 * 
-	 * @param type SQL value type
+	 * @param type
+	 *            SQL value type
 	 * @return The set of values that are stored of the specified type
 	 */
-	public static Set getValues(int type){
-		switch (type){
-		case Types.DOUBLE:{
+	public static Set getValues(int type) {
+		switch (type) {
+		case Types.DOUBLE: {
 			return doubleSet;
 		}
 
-		case Types.VARCHAR:{
+		case Types.VARCHAR: {
 			return stringSet;
 		}
 
-		case Types.INTEGER:{
+		case Types.INTEGER: {
 			return intSet;
 		}
-		
-		default:{
-			
+
+		default: {
+
 			throw new RuntimeException("Invalid Type" + type);
 		}
 		}
@@ -105,7 +221,7 @@ public class QueryProcessor {
 	 *         remove parens and the like if we want to evaluate expressions.
 	 */
 	private static String replaceOperators(String query) {
-		Character[] charSet = { '(', ')', '+', '/', '=', '[', ']', '*', '-' };
+		Character[] charSet = { '(', ')', '+', '/', '=', '[', ']', '*', '-', '.'};
 		for (Character ch : charSet) {
 			while (query.indexOf(ch) >= 0) {
 				query = query.substring(0, query.indexOf(ch)) + ' '
@@ -114,7 +230,6 @@ public class QueryProcessor {
 		}
 		return query;
 	}
-
 
 	/**
 	 * 
@@ -198,7 +313,7 @@ public class QueryProcessor {
 			}
 
 			// See what we're trying to match
-			quoteChar = query.charAt (startIdx);
+			quoteChar = query.charAt(startIdx);
 
 			endIdx = query.indexOf(quoteChar, startIdx + 1);
 
@@ -231,16 +346,5 @@ public class QueryProcessor {
 			stringSet.add(query.substring(startIdx, endIdx + 1));
 			query = query.substring(0, startIdx) + query.substring(endIdx + 1);
 		}
-	}
-
-	public static void main(String[] args) {
-		QueryProcessor qp = new QueryProcessor();
-		qp.processQuery("");
-		System.out.println("Doubles: "
-				+ Arrays.toString(qp.doubleSet.toArray()));
-		System.out.println("Ints: " + Arrays.toString(qp.intSet.toArray()));
-		System.out.println("Strings: "
-				+ Arrays.toString(qp.stringSet.toArray()));
-
 	}
 }
