@@ -226,6 +226,8 @@ public class InstanceTester {
 			System.err.println("Unable to perform check for query differences");
 			e.printStackTrace();
 		}
+		
+		EntryPoint.examplesTested.incrementAndGet();
 
 		// if the queries are different, save the instance to the out folder
 		if (isDiff && numRows < minRows) {

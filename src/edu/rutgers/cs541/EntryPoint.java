@@ -15,6 +15,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
@@ -33,15 +34,19 @@ public class EntryPoint {
 	public static Random random = new Random();
 
 	public static String query1, query2;
+	
 
 	private static int solutionsFound = 0;
+	public static  AtomicInteger examplesTested = new AtomicInteger();
 	private static String outputDirectory;
-
+	
 	private static String schemaFile;
 	
 	private static Runnable[] runners = new Runnable[4];
 	
 	public static int numColumns = 0;
+	
+	
 
 	/**
 	 * This is the main method, where execution begins
