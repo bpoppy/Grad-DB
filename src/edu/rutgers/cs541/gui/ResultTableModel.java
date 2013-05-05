@@ -13,6 +13,10 @@ public class ResultTableModel extends AbstractTableModel {
 		"Tuple Count"
 	};
 
+	public ResultTableModel() {
+		this.data = new ArrayList<String[]>();
+	}
+
 	public ResultTableModel(ArrayList<String[]> data) {
 		this.data = data;
 	}
