@@ -35,6 +35,8 @@ public class EntryPoint {
 
 	public static String query1, query2;
 	
+	private final static int NUM_THREADS = 4;
+	
 
 	private static int solutionsFound = 0;
 	public static  AtomicInteger examplesTested = new AtomicInteger();
@@ -42,7 +44,8 @@ public class EntryPoint {
 	
 	private static String schemaFile;
 	
-	private static Runnable[] runners = new Runnable[4];
+	private static Runnable[] runners = new Runnable[NUM_THREADS];
+	private static Thread[] threads = new Thread[NUM_THREADS];
 	
 	public static int numColumns = 0;
 	
@@ -78,11 +81,12 @@ public class EntryPoint {
 		initializeTable(schemaFile);
 		
 		
-		for(int i = 0; i < EntryPoint.runners.length; i++) {
+		for(int i = 0; i < NUM_THREADS; i++) {
 			EntryPoint.runners[i] = new TestThread(schemaFile);
 		}
-		for(int i = 0; i < EntryPoint.runners.length; i++) {
-			EntryPoint.runners[i].run();
+		for(int i = 0; i < NUM_THREADS; i++) {
+			EntryPoint.threads[i] = new Thread(runners[i]);
+			EntryPoint.threads[i].run();
 		}
 		
 	}
