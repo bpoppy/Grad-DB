@@ -1,5 +1,6 @@
 package edu.rutgers.cs541.gui;
 
+import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -36,6 +37,7 @@ public class FormWindow extends BasePanel {
 		// Container for schema editor
 		JPanel schemaSection = new JPanel();
 		schemaSection.setLayout(new BoxLayout(schemaSection, BoxLayout.Y_AXIS));
+		schemaSection.setPreferredSize(new Dimension(420, 270));
         final JScrollPane schemaEditor = EditorFactory.createSchemaEditor();
         final JButton schemaUploadButton = new JButton("Upload Schema");
         schemaSection.add(schemaEditor);

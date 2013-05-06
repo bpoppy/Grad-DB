@@ -4,6 +4,7 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Date;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -104,6 +105,7 @@ public class ResultsWindow extends BasePanel {
 			}
 		});
 
+		EntryPoint.startTime = new Date().getTime();
         EntryPoint.beginJudgment(q1, q2, s, this);
 	}
 
