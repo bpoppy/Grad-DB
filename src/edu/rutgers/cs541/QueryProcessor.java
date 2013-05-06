@@ -260,11 +260,11 @@ public class QueryProcessor {
 	private static boolean concattedString(String query, int idx) {
 		int i;
 
-		for (i = idx + 1; query.charAt(i) == ' '; i++) {
+		for (i = idx + 1; i < query.length() &&  query.charAt(i) == ' '; i++) {
 			;
 		}
 
-		if (query.charAt(i) == '\'' || query.charAt(i) == '\"') {
+		if (i < query.length() && (query.charAt(i) == '\'' || query.charAt(i) == '\"')) {
 			return true;
 		}
 		return false;
@@ -281,7 +281,7 @@ public class QueryProcessor {
 	private static int concattedStringStartIdx(String query, int idx) {
 		int i;
 
-		for (i = idx + 1; query.charAt(i) == ' '; i++) {
+		for (i = idx + 1; i < query.length() && query.charAt(i) == ' '; i++) {
 			;
 		}
 
@@ -325,14 +325,14 @@ public class QueryProcessor {
 
 			while (true) {
 				while (precedingSlashes(query, endIdx) % 2 == 1
-						|| endIdx + 1 >= query.length() || query.charAt(endIdx + 1) == quoteChar) {
+						|| endIdx + 1 < query.length() && query.charAt(endIdx + 1) == quoteChar) {
 
 					// make sure the quote isn't escaped
 					while (precedingSlashes(query, endIdx) % 2 == 1) {
 						endIdx = query.indexOf(quoteChar, endIdx + 1);
 					}
 					// make sure it isn't a literal quote ex: '' , ""
-					while (query.charAt(endIdx + 1) == quoteChar) {
+					while (endIdx + 1 < query.length() && query.charAt(endIdx + 1) == quoteChar) {
 						endIdx = query.indexOf(quoteChar, endIdx + 2);
 					}
 				}

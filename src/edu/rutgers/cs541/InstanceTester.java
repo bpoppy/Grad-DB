@@ -237,6 +237,7 @@ public class InstanceTester {
 		} catch (SQLException e) {
 			System.err.println("Unable to perform check for query differences");
 			e.printStackTrace();
+			System.exit(0);
 		}
 
 		EntryPoint.examplesTested.incrementAndGet();
