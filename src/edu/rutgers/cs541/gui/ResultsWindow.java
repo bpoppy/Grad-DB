@@ -14,6 +14,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 import edu.rutgers.cs541.EntryPoint;
 import edu.rutgers.cs541.InstanceTester;
@@ -71,7 +73,8 @@ public class ResultsWindow extends BasePanel {
 		// Show & back buttons
         JPanel buttons = new JPanel();
         JButton backButton = new JButton("Back");
-        JButton showButton = new JButton("Show");
+        final JButton showButton = new JButton("Show");
+        showButton.setEnabled(false);
         buttons.add(backButton);
         buttons.add(showButton);
         this.add(buttons);
@@ -95,6 +98,11 @@ public class ResultsWindow extends BasePanel {
 				result.setVisible(true);
         	}
         });
+		resultsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+			public void valueChanged(ListSelectionEvent e) {
+				showButton.setEnabled(true);
+			}
+		});
 
         EntryPoint.beginJudgment(q1, q2, s, this);
 	}
