@@ -1,8 +1,13 @@
 package edu.rutgers.cs541.gui;
 
+import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -22,6 +27,7 @@ public class ResultsWindow extends BasePanel {
 		// Initialization
 		super();
 		this.title = "Results";
+		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
 		// Container
 		JPanel wrapper = new JPanel();
@@ -49,17 +55,46 @@ public class ResultsWindow extends BasePanel {
 		queries.add(query2);
 		textAreas.add(queries);
 
-
+		// Create table
 		this.tableModel = new ResultTableModel();
 		this.resultsTable = new JTable(this.tableModel);
 		this.resultsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		JScrollPane tableScroll = new JScrollPane(this.resultsTable);
 		wrapper.add(tableScroll);
 		wrapper.setBorder(new EmptyBorder(25, 25, 25, 25));
+		wrapper.setMinimumSize(new Dimension(740, 400));
 
+		// Add wrapper to window
         this.add(wrapper);
 
-        EntryPoint.beginJudgement(q1, q2, s, this);
+		// Show & back buttons
+        JPanel buttons = new JPanel();
+        JButton backButton = new JButton("Back");
+        JButton showButton = new JButton("Show");
+        buttons.add(backButton);
+        buttons.add(showButton);
+        this.add(buttons);
+
+        backButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				ResultsWindow self = ResultsWindow.this;
+				self.close();
+			}
+        });
+        showButton.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent evt) {
+				ResultsWindow self = ResultsWindow.this;
+				int row = resultsTable.getSelectedRow();
+				String[] chosen = tableModel.getResult(row);
+				JFrame result = new JFrame("Result " + chosen[0]);
+				result.add(new SolutionWindow(chosen));
+				result.pack();
+				result.setLocationRelativeTo(null);
+				result.setVisible(true);
+        	}
+        });
+
+        EntryPoint.beginJudgment(q1, q2, s, this);
 	}
 
 	public void publishResult(String[] result) {

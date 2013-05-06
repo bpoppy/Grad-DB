@@ -36,6 +36,11 @@ public class ResultTableModel extends AbstractTableModel {
 		return this.data.get(row)[col];
 	}
 
+    @Override
+	public String getColumnName(int col) {
+        return this.columnNames[col];
+    }
+
 	public void addResult(String[] result) {
 		this.data.add(result);
 		this.fireTableDataChanged();
