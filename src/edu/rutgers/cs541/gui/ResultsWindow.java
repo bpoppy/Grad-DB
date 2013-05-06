@@ -16,6 +16,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.border.EmptyBorder;
 
 import edu.rutgers.cs541.EntryPoint;
+import edu.rutgers.cs541.InstanceTester;
 
 public class ResultsWindow extends BasePanel {
 
@@ -78,6 +79,7 @@ public class ResultsWindow extends BasePanel {
         backButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				ResultsWindow self = ResultsWindow.this;
+				InstanceTester.active = false;
 				self.close();
 			}
         });

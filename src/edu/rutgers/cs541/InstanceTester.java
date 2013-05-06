@@ -21,6 +21,7 @@ public class InstanceTester {
 	private Statement stmt;
 
 	public static AtomicInteger minRows = new AtomicInteger(Integer.MAX_VALUE);
+	public static boolean active = true;
 
 
 	private int numRows = 0;

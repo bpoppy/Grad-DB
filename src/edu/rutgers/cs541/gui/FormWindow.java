@@ -15,6 +15,7 @@ import javax.swing.JSeparator;
 
 import jsyntaxpane.DefaultSyntaxKit;
 import edu.rutgers.cs541.EntryPoint;
+import edu.rutgers.cs541.InstanceTester;
 
 
 
@@ -117,6 +118,7 @@ public class FormWindow extends BasePanel {
 				String q1Text = q1.getText().trim();
 				String q2Text = q2.getText().trim();
 				String schemaText = schema.getText().trim();
+				InstanceTester.active = true;
 				self.open(new ResultsWindow(q1Text, q2Text, schemaText));
 			}
 		});
