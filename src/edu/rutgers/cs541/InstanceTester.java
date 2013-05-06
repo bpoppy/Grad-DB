@@ -246,13 +246,13 @@ public class InstanceTester {
 		// if the queries are different, save the instance to the out folder
 		if (isDiff && this.numRows < minRows.get()) {
 			String[] result = new String[] {
-				"" + EntryPoint.solutionsFound.get(),
+				"" + (EntryPoint.solutionsFound.get() + 1),
 				new Date().getTime() - EntryPoint.startTime + "",
 				"" + EntryPoint.examplesTested.get(),
 				"" + this.numRows,
 			};
-			EntryPoint.writeInstance(this.stmt);
 			EntryPoint.window.publishResult(result);
+			EntryPoint.writeInstance(this.stmt);
 			minRows.set(this.numRows);
 		}
 	}

@@ -98,7 +98,7 @@ public class EntryPoint {
 
 	}
 
-	public static void beginJudgement(String q1, String q2, String s, ResultsWindow resultWindow) {
+	public static void beginJudgment(String q1, String q2, String s, ResultsWindow resultWindow) {
 		window = resultWindow;
 		schemaFile = createSchemaFile(s);
 		query1 = q1;
