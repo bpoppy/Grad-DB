@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -20,36 +21,37 @@ public class InstanceTester {
 	private Statement stmt;
 
 	public static AtomicInteger minRows = new AtomicInteger(Integer.MAX_VALUE);
-	
-	
+
+
 	private int numRows = 0;
 
-	private HashMap<String, TableConstraints> tableConstraints = new HashMap<String, TableConstraints>();
-	private HashMap<String, Integer> tableSizes = new HashMap<String, Integer>();
-	
+	private final HashMap<String, TableConstraints> tableConstraints = new HashMap<String, TableConstraints>();
+	private final HashMap<String, Integer> tableSizes = new HashMap<String, Integer>();
+
 	private TreeSet<Double> doubleSet = new TreeSet<Double>();
 	private TreeSet<Integer> intSet = new TreeSet<Integer>();
 	private TreeSet<String> stringSet = new TreeSet<String>();
 
 	public InstanceTester(String schemaFile, int minimumDataPoints, int maxTuples) {
-		getQueryProcessorValues();
-		padConstraintValues(minimumDataPoints);
-		initializeTable(schemaFile);
-		determineConstraints();
-		for(String tableName : tableConstraints.keySet()){
+		this.getQueryProcessorValues();
+		this.padConstraintValues(minimumDataPoints);
+		this.initializeTable(schemaFile);
+		this.determineConstraints();
+		for(String tableName : this.tableConstraints.keySet()){
 			int tableSize = EntryPoint.random.nextInt(maxTuples);
 			maxTuples -= tableSize;
-			tableSizes.put(tableName,  tableSize);
+			this.tableSizes.put(tableName,  tableSize);
 		}
-		populateTables();
-		testEquality();
+		this.populateTables();
+		this.testEquality();
 	}
 
 	public static int cardinality(boolean[] array) {
 		int count = 0;
 		for (int i = 0; i < array.length; i++) {
-			if (array[i])
+			if (array[i]) {
 				count++;
+			}
 		}
 		return count;
 	}
@@ -64,7 +66,7 @@ public class InstanceTester {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param type
 	 *            SQL value type
 	 * @return The set of values that are stored of the specified type
@@ -72,15 +74,15 @@ public class InstanceTester {
 	public Set getValues(int type) {
 		switch (type) {
 		case Types.DOUBLE: {
-			return doubleSet;
+			return this.doubleSet;
 		}
 
 		case Types.VARCHAR: {
-			return stringSet;
+			return this.stringSet;
 		}
 
 		case Types.INTEGER: {
-			return intSet;
+			return this.intSet;
 		}
 
 		default: {
@@ -92,11 +94,11 @@ public class InstanceTester {
 
 	@SuppressWarnings("unchecked")
 	private synchronized void getQueryProcessorValues() {
-		doubleSet = (TreeSet<Double>) ((TreeSet<Double>) QueryProcessor
+		this.doubleSet = (TreeSet<Double>) ((TreeSet<Double>) QueryProcessor
 				.getValues(Types.DOUBLE)).clone();
-		intSet = (TreeSet<Integer>) ((TreeSet<Integer>) QueryProcessor
+		this.intSet = (TreeSet<Integer>) ((TreeSet<Integer>) QueryProcessor
 				.getValues(Types.INTEGER)).clone();
-		stringSet = (TreeSet<String>) ((TreeSet<String>) QueryProcessor
+		this.stringSet = (TreeSet<String>) ((TreeSet<String>) QueryProcessor
 				.getValues(Types.VARCHAR)).clone();
 	}
 
@@ -116,7 +118,7 @@ public class InstanceTester {
 		String dbUser = "dummy";
 		String dbPassword = "password";
 
-		stmt = null;
+		this.stmt = null;
 
 		// This is the URL to create an H2 private In-Memory DB
 		String dbUrl = "jdbc:h2:mem:";
@@ -126,10 +128,10 @@ public class InstanceTester {
 			// since the DB does not already exist, it will be created
 			// automatically
 			// http://www.h2database.com/html/features.html#in_memory_databases
-			conn = DriverManager.getConnection(dbUrl, dbUser, dbPassword);
+			this.conn = DriverManager.getConnection(dbUrl, dbUser, dbPassword);
 
 			// create a statement to execute queries
-			stmt = conn.createStatement();
+			this.stmt = this.conn.createStatement();
 		} catch (SQLException e) {
 			System.err.println("Unable to initialize H2 database");
 			e.printStackTrace();
@@ -140,7 +142,7 @@ public class InstanceTester {
 		// http://www.h2database.com/html/grammar.html#runscript
 		// We will use it here to run the user-supplied schema script.
 		try {
-			stmt.execute("RUNSCRIPT FROM '" + schemaFile + "'");
+			this.stmt.execute("RUNSCRIPT FROM '" + schemaFile + "'");
 		} catch (SQLException e) {
 			System.err.println("Unable to load the schema script \""
 					+ schemaFile + "\"");
@@ -149,16 +151,16 @@ public class InstanceTester {
 	}
 
 	private void padConstraintValues(int minConstraints) {
-		while (doubleSet.size() < minConstraints) {
-			doubleSet.add(EntryPoint.random.nextDouble());
+		while (this.doubleSet.size() < minConstraints) {
+			this.doubleSet.add(EntryPoint.random.nextDouble());
 		}
 
-		while (intSet.size() < minConstraints) {
-			intSet.add(EntryPoint.random.nextInt());
+		while (this.intSet.size() < minConstraints) {
+			this.intSet.add(EntryPoint.random.nextInt());
 		}
 
-		while (stringSet.size() < minConstraints) {
-			stringSet.add(ColumnConstraints.randomString(100));
+		while (this.stringSet.size() < minConstraints) {
+			this.stringSet.add(ColumnConstraints.randomString(100));
 		}
 	}
 
@@ -169,7 +171,7 @@ public class InstanceTester {
 		try {
 			// see what tables are in the schema
 			// (note that the user schema is called PUBLIC by default)
-			ResultSet rsTab = stmt.executeQuery("SELECT table_name "
+			ResultSet rsTab = this.stmt.executeQuery("SELECT table_name "
 					+ "FROM information_schema.tables "
 					+ "WHERE table_schema = 'PUBLIC'");
 
@@ -184,7 +186,7 @@ public class InstanceTester {
 				TableConstraints ts = new TableConstraints(tableName, this);
 
 				// query for the columns of the current table
-				ResultSet rsCol = stmt
+				ResultSet rsCol = this.stmt
 						.executeQuery("SELECT column_name, data_type, is_nullable, character_maximum_length "
 								+ "FROM information_schema.columns "
 								+ "WHERE table_schema = 'PUBLIC' "
@@ -197,10 +199,11 @@ public class InstanceTester {
 					int dataType = rsCol.getInt(2);
 					boolean isNullable = rsCol.getBoolean(3);
 					int maxSize = rsCol.getInt(4);
-					if (QueryProcessor.usefulColumns.contains(columnName.toLowerCase()))
+					if (QueryProcessor.usefulColumns.contains(columnName.toLowerCase())) {
 						ts.addColumn(columnName, dataType, isNullable, maxSize);
+					}
 				}
-				tableConstraints.put(tableName, ts);
+				this.tableConstraints.put(tableName, ts);
 
 				rsCol.close();
 			}
@@ -216,12 +219,12 @@ public class InstanceTester {
 		boolean isDiff = false;
 		try {
 
-			String groupedQuery1 = getGroupedQuery(stmt, EntryPoint.query1);
-			String groupedQuery2 = getGroupedQuery(stmt, EntryPoint.query2);
+			String groupedQuery1 = getGroupedQuery(this.stmt, EntryPoint.query1);
+			String groupedQuery2 = getGroupedQuery(this.stmt, EntryPoint.query2);
 
 			// check if there are rows returned in query1 that are
 			// not returned in query2
-			ResultSet rsChk = stmt.executeQuery("SELECT ("
+			ResultSet rsChk = this.stmt.executeQuery("SELECT ("
 					+ "SELECT COUNT(*) AS diff12 FROM (" + groupedQuery1
 					+ " EXCEPT " + groupedQuery2 + "))" + " + "
 					+ "(SELECT COUNT(*) AS diff21 FROM (" + groupedQuery2
@@ -239,9 +242,16 @@ public class InstanceTester {
 		EntryPoint.examplesTested.incrementAndGet();
 
 		// if the queries are different, save the instance to the out folder
-		if (isDiff && numRows < minRows.get()) {
-			EntryPoint.writeInstance(stmt);
-			minRows.set(numRows);
+		if (isDiff && this.numRows < minRows.get()) {
+			String[] result = new String[] {
+				"" + EntryPoint.solutionsFound.get(),
+				new Date().getTime() - EntryPoint.startTime + "",
+				"" + EntryPoint.examplesTested.get(),
+				"" + this.numRows,
+			};
+			EntryPoint.writeInstance(this.stmt);
+			EntryPoint.window.publishResult(result);
+			minRows.set(this.numRows);
 		}
 	}
 
@@ -251,7 +261,7 @@ public class InstanceTester {
 		try {
 			// see what tables are in the schema
 			// (note that the user schema is called PUBLIC by default)
-			ResultSet rsTab = stmt.executeQuery("SELECT table_name "
+			ResultSet rsTab = this.stmt.executeQuery("SELECT table_name "
 					+ "FROM information_schema.tables "
 					+ "WHERE table_schema = 'PUBLIC'");
 
@@ -264,8 +274,8 @@ public class InstanceTester {
 
 			for (String tableName : tableNames) {
 
-				int numInserts = tableSizes.get(tableName);
-				numRows += numInserts;
+				int numInserts = this.tableSizes.get(tableName);
+				this.numRows += numInserts;
 				for (; numInserts > 0; numInserts--) {
 					// for each table in the schema,
 					// we will generate an INSERT statement to create a tuple
@@ -275,7 +285,7 @@ public class InstanceTester {
 					insertSb.append(" VALUES (");
 
 					// query for the columns of the current table
-					ResultSet rsCol = stmt.executeQuery("SELECT column_name, data_type "
+					ResultSet rsCol = this.stmt.executeQuery("SELECT column_name, data_type "
 							+ "FROM information_schema.columns "
 							+ "WHERE table_schema = 'PUBLIC' "
 							+ "  AND table_name = '" + tableName + "'"
@@ -284,7 +294,7 @@ public class InstanceTester {
 					while (rsCol.next()) {
 						String columnName = rsCol.getString(1);
 						int dataType = rsCol.getInt(2);
-						
+
 
 						if (colNum++ != 1) {
 							insertSb.append(", ");
@@ -294,11 +304,11 @@ public class InstanceTester {
 
 							// generate a value appropriate for the column's
 							// type
-							insertSb.append(tableConstraints.get(tableName)
+							insertSb.append(this.tableConstraints.get(tableName)
 									.getColumnConstraints(columnName)
 									.getValueString());
 						} else{
-							insertSb.append(defaultValue(dataType));
+							insertSb.append(this.defaultValue(dataType));
 						}
 					}
 					insertSb.append(")");
@@ -307,7 +317,7 @@ public class InstanceTester {
 					try {
 						// execute the INSERT statement to add a tuple to the
 						// table
-						stmt.executeUpdate(insertSb.toString());
+						this.stmt.executeUpdate(insertSb.toString());
 					} catch (Exception ex) {
 					}
 				}
@@ -318,12 +328,12 @@ public class InstanceTester {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public Object defaultValue(int dataType){
 		switch(dataType){
 		case Types.VARCHAR:{
 			return "\"A\"";
-		} 
+		}
 		case Types.INTEGER:{
 			return "0";
 		}
@@ -334,12 +344,12 @@ public class InstanceTester {
 			return "0";
 		}
 	}
-	
+
 
 	/**
 	 * Augment the query by grouping all columns in the Result Set and adding a
 	 * COUNT(*) field
-	 * 
+	 *
 	 * @param stmt
 	 *            - an active Statement to use for executing queries
 	 * @param query

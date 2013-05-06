@@ -9,9 +9,13 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 
+import edu.rutgers.cs541.EntryPoint;
+
 public class ResultsWindow extends BasePanel {
 
 	private static final long serialVersionUID = 1050574277702365359L;
+	private final JTable resultsTable;
+	private final ResultTableModel tableModel;
 
 	public ResultsWindow(String q1, String q2, String s) {
 		// Initialization
@@ -45,12 +49,19 @@ public class ResultsWindow extends BasePanel {
 		textAreas.add(queries);
 
 
-		final JTable resultsTable = new JTable(new ResultTableModel());
-		resultsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		JScrollPane tableScroll = new JScrollPane(resultsTable);
+		this.tableModel = new ResultTableModel();
+		this.resultsTable = new JTable(this.tableModel);
+		this.resultsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		JScrollPane tableScroll = new JScrollPane(this.resultsTable);
 		wrapper.add(tableScroll);
 
         this.add(wrapper);
+
+        EntryPoint.beginJudgement(q1, q2, s, this);
+	}
+
+	public void publishResult(String[] result) {
+		this.tableModel.addResult(result);
 	}
 
 }

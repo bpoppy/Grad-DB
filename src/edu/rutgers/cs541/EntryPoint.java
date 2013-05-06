@@ -1,8 +1,10 @@
 // TODO BEFORE COKE
 package edu.rutgers.cs541;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -13,9 +15,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import edu.rutgers.cs541.gui.ResultsWindow;
 
 
 /**
@@ -38,11 +43,13 @@ public class EntryPoint {
 	private final static int NUM_THREADS = 4;
 
 
-	private static int solutionsFound = 0;
+	public static AtomicInteger solutionsFound = new AtomicInteger();
 	public static  AtomicInteger examplesTested = new AtomicInteger();
 	private static String outputDirectory;
+	public static long startTime = new Date().getTime();
 
 	private static String schemaFile;
+	public static ResultsWindow window;
 
 	private static Runnable[] runners = new Runnable[NUM_THREADS];
 	private static Thread[] threads = new Thread[NUM_THREADS];
@@ -77,7 +84,7 @@ public class EntryPoint {
 
 		QueryProcessor.processQuery(schemaFile, query1);
 		QueryProcessor.processQuery(schemaFile, query2);
-		
+
 		initializeTable(schemaFile);
 
 
@@ -89,6 +96,40 @@ public class EntryPoint {
 			EntryPoint.threads[i].run();
 		}
 
+	}
+
+	public static void beginJudgement(String q1, String q2, String s, ResultsWindow resultWindow) {
+		window = resultWindow;
+		schemaFile = createSchemaFile(s);
+		query1 = q1;
+		query2 = q2;
+
+		try {
+			File tmp = new File("tmp");
+			if (! tmp.exists()) {
+				tmp.mkdir();
+			}
+		} catch (SecurityException e) {
+			e.printStackTrace();
+		}
+
+		outputDirectory = "tmp";
+
+		QueryProcessor.processQuery(schemaFile, query1);
+		QueryProcessor.processQuery(schemaFile, query2);
+
+		initializeTable(schemaFile);
+
+
+		for(int i = 0; i < NUM_THREADS; i++) {
+			EntryPoint.runners[i] = new TestThread(schemaFile);
+			System.out.println("OUTRUNNING");
+		}
+		for(int i = 0; i < NUM_THREADS; i++) {
+			System.out.println("OUT OF THREAD");
+			EntryPoint.threads[i] = new Thread(runners[i]);
+			EntryPoint.threads[i].start();
+		}
 	}
 
 	private static void initializeTable(String schemaFile) {
@@ -222,10 +263,10 @@ public class EntryPoint {
 		return rv;
 	}
 
-	public static synchronized void writeInstance(Statement stmt) {
+	public static void writeInstance(Statement stmt) {
 
 		// use the user-supplied directory (last command line argument)
-		String outPath = new File(outputDirectory, (++solutionsFound) + ".sql")
+		String outPath = new File(outputDirectory, (solutionsFound.incrementAndGet()) + ".sql")
 				.getPath();
 		try {
 			// Use another handy H2 command to save the instance
@@ -236,4 +277,28 @@ public class EntryPoint {
 			e.printStackTrace();
 		}
 	}
+
+	public static String createSchemaFile(String schemaText) {
+		File schemaFile = new File("tmp" + File.separator + "schema");
+		BufferedWriter bw = null;
+		try {
+			schemaFile.createNewFile();
+			bw = new BufferedWriter(new FileWriter(schemaFile));
+			bw.write(schemaText);
+			return schemaFile.getAbsolutePath();
+		} catch (Exception allOfThem) {
+			allOfThem.printStackTrace();
+		}
+		finally {
+			try {
+				bw.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (NullPointerException e) {
+				e.printStackTrace();
+			}
+		}
+		return "";
+	}
 }
+
