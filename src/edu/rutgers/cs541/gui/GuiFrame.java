@@ -64,6 +64,7 @@ public class GuiFrame extends JFrame {
 	public void redraw() {
 		this.validate();
 		this.repaint();
+		this.setLocationRelativeTo(null);
 		this.pack();
 		this.setVisible(true);
 	}

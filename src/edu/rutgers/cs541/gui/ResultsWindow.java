@@ -8,6 +8,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.border.EmptyBorder;
 
 import edu.rutgers.cs541.EntryPoint;
 
@@ -54,6 +55,7 @@ public class ResultsWindow extends BasePanel {
 		this.resultsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		JScrollPane tableScroll = new JScrollPane(this.resultsTable);
 		wrapper.add(tableScroll);
+		wrapper.setBorder(new EmptyBorder(25, 25, 25, 25));
 
         this.add(wrapper);
 
