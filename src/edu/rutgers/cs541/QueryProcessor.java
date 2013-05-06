@@ -33,6 +33,7 @@ public class QueryProcessor {
 
 	private static TreeSet<String> allColumns = null;
 	public static  TreeSet<String> usefulColumns = new TreeSet<String>();
+	public static int numTables;
 
 	/**
 	 * Process the query and extract all values we care about.
@@ -122,6 +123,7 @@ public class QueryProcessor {
 
 			List<String> tableNames = new ArrayList<String>();
 			while (rsTab.next()) {
+				numTables++;
 				// note that column indexing starts from 1
 				tableNames.add(rsTab.getString(1));
 			}

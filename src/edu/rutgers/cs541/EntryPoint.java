@@ -89,7 +89,7 @@ public class EntryPoint {
 
 
 		for(int i = 0; i < NUM_THREADS; i++) {
-			EntryPoint.runners[i] = new TestThread(schemaFile);
+			EntryPoint.runners[i] = new TestThread(schemaFile, i);
 		}
 		for(int i = 0; i < NUM_THREADS; i++) {
 			EntryPoint.threads[i] = new Thread(runners[i]);
@@ -122,7 +122,7 @@ public class EntryPoint {
 
 
 		for(int i = 0; i < NUM_THREADS; i++) {
-			EntryPoint.runners[i] = new TestThread(schemaFile);
+			EntryPoint.runners[i] = new TestThread(schemaFile, i);
 			System.out.println("OUTRUNNING");
 		}
 		for(int i = 0; i < NUM_THREADS; i++) {
