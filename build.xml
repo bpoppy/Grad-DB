@@ -1,20 +1,32 @@
 <!-- This is the config file used by ant to compile your code.
-     You should not need to edit this file.  
+     You should not need to edit this file.
      If for some reason, you believe changes are necessary, email the TA first. -->
 	
-<project name="QueryCompare" default="compile" basedir=".">
+<project name="QueryCompare" default="build-jar" basedir=".">
 	
 	<target name="clean" description="remove previously compiled code">
 	    <delete dir="classes"/>
+	    <delete dir="out"/>
 	</target>
 	
 	<target name="compile" depends="clean" description="compile and deposit class files in classes directory">
 	    <!-- Create the build directory structure used by compile -->
     <mkdir dir="classes"/>
-	<javac srcdir="src" 
+	<javac srcdir="src"
+         classpath="lib/jsyntaxpane-0.9.4.jar"
 	       fork="yes"
-		   includeantruntime="false"
+         includeantruntime="false"
 	       destdir="classes">
     </javac>
+  </target>
+
+  <target name="build-jar" depends="compile" description="Build jar file">
+    <mkdir dir="out"/>
+    <jar destfile="out/your.jar" basedir="classes">
+       <zipgroupfileset dir="lib" includes="**/*.jar" />
+       <manifest>
+        <attribute name="Main-Class" value="edu.rutgers.cs541.gui.GuiFrame"/>
+       </manifest>
+    </jar>
   </target>
 </project>	
